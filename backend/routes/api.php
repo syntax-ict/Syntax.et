@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AuthController;
+use App\Http\Controllers\Api\Public\ContactMessageController;
 use App\Http\Controllers\Api\Public\CourseController;
+use App\Http\Controllers\Api\Public\CourseRegistrationController;
 use App\Http\Controllers\Api\Public\CustomerProblemController;
+use App\Http\Controllers\Api\Public\InquiryController;
 use App\Http\Controllers\Api\Public\ProjectController;
 use App\Http\Controllers\Api\Public\ServiceController;
 use App\Http\Controllers\Api\Public\SolutionCategoryController;
@@ -12,9 +15,9 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Public API routes
 |--------------------------------------------------------------------------
-| No authentication. Read-only content routes (architecture §5, §6). Phase 3
-| adds the public submission routes (inquiries, course-registrations,
-| contact-messages).
+| No authentication. Read-only content routes (architecture §5) plus the
+| public submission routes below (architecture §6): inquiries covers
+| consultation/quote/support requests, which share one staff workflow.
 */
 Route::get('/health', fn () => response()->json([
     'success' => true,
@@ -34,6 +37,13 @@ Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.
 
 Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
 Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('projects.show');
+
+Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
+Route::get('/inquiries/{reference}', [InquiryController::class, 'show'])->name('inquiries.show');
+
+Route::post('/course-registrations', [CourseRegistrationController::class, 'store'])->name('course-registrations.store');
+
+Route::post('/contact-messages', [ContactMessageController::class, 'store'])->name('contact-messages.store');
 
 /*
 |--------------------------------------------------------------------------

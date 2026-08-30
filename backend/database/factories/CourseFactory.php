@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Course;
 use App\Models\SolutionCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Course>
@@ -17,8 +18,8 @@ class CourseFactory extends Factory
 
         return [
             'solution_category_id' => SolutionCategory::factory(),
-            'slug' => str($title)->slug(),
-            'title' => str($title)->title(),
+            'slug' => Str::slug($title),
+            'title' => Str::title($title),
             'duration' => '4 weeks',
             'level' => fake()->randomElement(['beginner', 'intermediate', 'advanced', 'all_levels']),
             'mode' => fake()->randomElement(['online', 'face_to_face', 'corporate']),

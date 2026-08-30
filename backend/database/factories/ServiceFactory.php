@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Service;
 use App\Models\SolutionCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Service>
@@ -17,8 +18,8 @@ class ServiceFactory extends Factory
 
         return [
             'solution_category_id' => SolutionCategory::factory(),
-            'slug' => str($name)->slug(),
-            'name' => str($name)->title(),
+            'slug' => Str::slug($name),
+            'name' => Str::title($name),
             'short_description' => fake()->sentence(),
             'description' => fake()->paragraphs(3, true),
             'icon' => 'Shield',

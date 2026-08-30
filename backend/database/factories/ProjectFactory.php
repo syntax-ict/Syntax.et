@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\Project;
 use App\Models\SolutionCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Project>
@@ -17,8 +18,8 @@ class ProjectFactory extends Factory
 
         return [
             'solution_category_id' => SolutionCategory::factory(),
-            'slug' => str($title)->slug(),
-            'title' => str($title)->title(),
+            'slug' => Str::slug($title),
+            'title' => Str::title($title),
             'client_type' => fake()->randomElement(['government', 'private_enterprise', 'retail_hub', 'corporate_office']),
             'industry' => fake()->word(),
             'description' => fake()->paragraph(),

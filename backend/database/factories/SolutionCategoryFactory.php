@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\SolutionCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<SolutionCategory>
@@ -15,8 +16,8 @@ class SolutionCategoryFactory extends Factory
         $name = fake()->unique()->words(3, true);
 
         return [
-            'slug' => str($name)->slug(),
-            'name' => str($name)->title(),
+            'slug' => Str::slug($name),
+            'name' => Str::title($name),
             'short_description' => fake()->sentence(),
             'detailed_description' => fake()->paragraph(),
             'icon' => 'Cpu',
