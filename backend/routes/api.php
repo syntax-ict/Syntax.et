@@ -1,21 +1,39 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AuthController;
+use App\Http\Controllers\Api\Public\CourseController;
+use App\Http\Controllers\Api\Public\CustomerProblemController;
+use App\Http\Controllers\Api\Public\ProjectController;
+use App\Http\Controllers\Api\Public\ServiceController;
+use App\Http\Controllers\Api\Public\SolutionCategoryController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Public API routes
 |--------------------------------------------------------------------------
-| No authentication. Phase 2 adds read-only content routes here
-| (solution-categories, services, courses, projects); Phase 3 adds the
-| public submission routes (inquiries, course-registrations,
+| No authentication. Read-only content routes (architecture §5, §6). Phase 3
+| adds the public submission routes (inquiries, course-registrations,
 | contact-messages).
 */
 Route::get('/health', fn () => response()->json([
     'success' => true,
     'data' => ['status' => 'ok', 'time' => now()->toIso8601String()],
 ]));
+
+Route::get('/solution-categories', [SolutionCategoryController::class, 'index'])->name('solution-categories.index');
+Route::get('/solution-categories/{slug}', [SolutionCategoryController::class, 'show'])->name('solution-categories.show');
+
+Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
+
+Route::get('/customer-problems', [CustomerProblemController::class, 'index'])->name('customer-problems.index');
+
+Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');
+
+Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('projects.show');
 
 /*
 |--------------------------------------------------------------------------
