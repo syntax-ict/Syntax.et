@@ -3,3 +3,8 @@ node_modules/
 coverage/
 *.tsbuildinfo
 package-lock.json
+
+# Laravel backend (see /backend) is a separate PHP project with its own
+# style tool (./vendor/bin/pint) — Prettier has no business reformatting
+# its composer.json/composer.lock, PHP, or generated files.
+backend/
