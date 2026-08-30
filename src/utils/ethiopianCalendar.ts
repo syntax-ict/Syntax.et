@@ -8,7 +8,7 @@ export function getEthiopianMonthLength(year: number, month: number): number {
   if (month >= 1 && month <= 12) return 30;
   if (month === 13) {
     // Leap year rule: Ethiopian leap year is when Year % 4 === 3
-    return (year % 4 === 3) ? 6 : 5;
+    return year % 4 === 3 ? 6 : 5;
   }
   return 30;
 }
@@ -74,15 +74,19 @@ export function gregorianToEthiopian(gDate: Date): EthiopianDate {
  */
 export function ethiopianToGregorian(eYear: number, eMonth: number, eDay: number): Date {
   const refG = new Date(Date.UTC(2024, 8, 11)); // Sept 11, 2024 represents Meskerem 1, 2017 EC
-  
+
   // Calculate relative day distance from Meskerem 1, 2017 EC
   let dayDiff = 0;
-  
+
   const targetYear = eYear;
   const targetMonth = eMonth;
   const targetDay = eDay;
-  
-  if (targetYear > 2017 || (targetYear === 2017 && targetMonth > 1) || (targetYear === 2017 && targetMonth === 1 && targetDay > 1)) {
+
+  if (
+    targetYear > 2017 ||
+    (targetYear === 2017 && targetMonth > 1) ||
+    (targetYear === 2017 && targetMonth === 1 && targetDay > 1)
+  ) {
     // Step forward
     let cy = 2017;
     let cm = 1;
@@ -129,11 +133,11 @@ export function ethiopianToGregorian(eYear: number, eMonth: number, eDay: number
       }
     }
     // Now step up from start of that month to target day
-    dayDiff += (targetDay - 1);
-    
+    dayDiff += targetDay - 1;
+
     const resultTime = refG.getTime() + dayDiff * 24 * 60 * 60 * 1000;
     return new Date(resultTime);
   }
-  
+
   return refG;
 }

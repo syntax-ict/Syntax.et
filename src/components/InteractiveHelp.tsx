@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Shield, Fingerprint, Cpu, BookOpen, Briefcase, CheckCircle, ArrowRight } from "lucide-react";
+import {
+  Shield,
+  Fingerprint,
+  Cpu,
+  BookOpen,
+  Briefcase,
+  CheckCircle,
+  ArrowRight,
+} from "lucide-react";
 
 interface InteractiveHelpProps {
   onLaunchWizard: (type: "consultation" | "quote" | "training" | "support") => void;
@@ -8,11 +16,11 @@ interface InteractiveHelpProps {
   onSelectSolution?: (id: string) => void;
 }
 
-export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({ 
-  onLaunchWizard, 
+export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
+  onLaunchWizard,
   onNavigateToTab,
   onPreselectCourse,
-  onSelectSolution
+  onSelectSolution,
 }) => {
   const [activeCategory, setActiveCategory] = useState<
     "security" | "attendance" | "it" | "skills" | "branding"
@@ -24,85 +32,92 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
       icon: Shield,
       label: "Secure My Organization",
       description: "IP CCTV, commercial surveillance, and unified physical access logs.",
-      color: "border-blue-500 text-blue-600 dark:text-blue-400"
+      color: "border-blue-500 text-blue-600 dark:text-blue-400",
     },
     {
       id: "attendance" as const,
       icon: Fingerprint,
       label: "Manage Workforce",
       description: "Eliminate payroll buddy punching with biometric terminals.",
-      color: "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+      color: "border-emerald-500 text-emerald-600 dark:text-emerald-400",
     },
     {
       id: "it" as const,
       icon: Cpu,
       label: "Improve Technology",
       description: "Structured cabling, office LAN overhauls, and SLA support.",
-      color: "border-blue-600 text-blue-600 dark:text-blue-400"
+      color: "border-blue-600 text-blue-600 dark:text-blue-400",
     },
     {
       id: "skills" as const,
       icon: BookOpen,
       label: "Improve Skills",
       description: "Practical certification academies with hands-on labs.",
-      color: "border-purple-500 text-purple-600 dark:text-purple-400"
+      color: "border-purple-500 text-purple-600 dark:text-purple-400",
     },
     {
       id: "branding" as const,
       icon: Briefcase,
       label: "Promote My Business",
       description: "LED lightboxes, internal signs, and premium business print.",
-      color: "border-amber-500 text-amber-600 dark:text-amber-400"
-    }
+      color: "border-amber-500 text-amber-600 dark:text-amber-400",
+    },
   ];
 
   const recommendations = {
     security: {
       recommendedSystems: "Syntax Mega-Pixel IP Camera Array & Network Video Recorders (NVR)",
       timeframe: "3 - 7 Business Days Deployment",
-      benefit: "Provides 100% video surveillance coverage of internal and perimeter zones with night-vision, automated motion alerts, and secure mobile feeds.",
-      auditedFact: "Proven survival rate in heavy seasonal rains and high-fidelity incident video capturing.",
+      benefit:
+        "Provides 100% video surveillance coverage of internal and perimeter zones with night-vision, automated motion alerts, and secure mobile feeds.",
+      auditedFact:
+        "Proven survival rate in heavy seasonal rains and high-fidelity incident video capturing.",
       ctaType: "quote" as const,
       ctaLabel: "Configure Security Camera Quote",
-      relatedPillar: "security-smart"
+      relatedPillar: "security-smart",
     },
     attendance: {
       recommendedSystems: "Unified Face Recognition and Optical Fingerprint Access Gates",
       timeframe: "2 - 4 Business Days Deployment",
-      benefit: "Eliminates employee time fraud and 'buddy punching'. Automatically aggregates clock-in data into a single CSV or database export for HR payroll engines.",
+      benefit:
+        "Eliminates employee time fraud and 'buddy punching'. Automatically aggregates clock-in data into a single CSV or database export for HR payroll engines.",
       auditedFact: "Saves medium enterprises up to 15% on manual payroll processing leakage.",
       ctaType: "consultation" as const,
       ctaLabel: "Schedule Biometric Consultation",
-      relatedPillar: "security-smart"
+      relatedPillar: "security-smart",
     },
     it: {
-      recommendedSystems: "Structured Cat6 Office Cabling, Switch Rackmounts, and Router Configurations",
+      recommendedSystems:
+        "Structured Cat6 Office Cabling, Switch Rackmounts, and Router Configurations",
       timeframe: "5 - 12 Business Days Overhaul",
-      benefit: "Replaces slow, dropping network feeds with Gigabit capability. Provides secure WAN partitioning, professional rack management, and server cabinets.",
+      benefit:
+        "Replaces slow, dropping network feeds with Gigabit capability. Provides secure WAN partitioning, professional rack management, and server cabinets.",
       auditedFact: "Backed by monthly preventive hardware maintenance and emergency on-site SLAs.",
       ctaType: "consultation" as const,
       ctaLabel: "Request Network Assessment",
-      relatedPillar: "tech-solutions"
+      relatedPillar: "tech-solutions",
     },
     skills: {
       recommendedSystems: "CCTV Surveillance Design or Enterprise Networking Lab Academies",
       timeframe: "3 - 6 Weeks Hands-on Certification",
-      benefit: "Direct physical lab training. You terminate real Cat6 cables, mount real IP cameras, and program magnetic locks—minimizing theory to maximize capability.",
+      benefit:
+        "Direct physical lab training. You terminate real Cat6 cables, mount real IP cameras, and program magnetic locks—minimizing theory to maximize capability.",
       auditedFact: "Completed during flexible evening or morning shifts for busy cohorts.",
       ctaType: "training" as const,
       ctaLabel: "Open Training Academy Seats",
       courseName: "CCTV Surveillance Design & Biometric Integration",
-      relatedPillar: "training"
+      relatedPillar: "training",
     },
     branding: {
       recommendedSystems: "Storefront Weatherproof LED Lightboxes & Acrylic Logo Signage",
       timeframe: "4 - 8 Business Days Production",
-      benefit: "Presents a premium physical presence for corporate headquarters or busy retail showrooms. Designed and constructed using durable commercial-grade materials.",
+      benefit:
+        "Presents a premium physical presence for corporate headquarters or busy retail showrooms. Designed and constructed using durable commercial-grade materials.",
       auditedFact: "Color profiling matches absolute CMYK corporate vectors perfectly.",
       ctaType: "quote" as const,
       ctaLabel: "Get Signage & Printing Estimates",
-      relatedPillar: "business-support"
-    }
+      relatedPillar: "business-support",
+    },
   };
 
   const currentRec = recommendations[activeCategory];
@@ -117,13 +132,20 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
   };
 
   return (
-    <div id="interactive-diagnostic-panel" className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm space-y-6">
-      
+    <div
+      id="interactive-diagnostic-panel"
+      className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm space-y-6"
+    >
       <div className="space-y-2">
-        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider block">Interactive Diagnostic Tool</span>
-        <h3 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-white uppercase tracking-tight">What do you need help with today?</h3>
+        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider block">
+          Interactive Diagnostic Tool
+        </span>
+        <h3 className="text-xl sm:text-2xl font-black text-slate-950 dark:text-white uppercase tracking-tight">
+          What do you need help with today?
+        </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
-          Select your organizational goal below. Our digital architect will instantly recommend the exact physical system configuration and conversion route.
+          Select your organizational goal below. Our digital architect will instantly recommend the
+          exact physical system configuration and conversion route.
         </p>
       </div>
 
@@ -145,7 +167,9 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
               <Icon className={`w-5 h-5 ${isSelected ? "text-blue-400" : "text-slate-500"}`} />
               <div className="space-y-0.5 mt-2">
                 <span className="block text-xs font-bold leading-tight">{cat.label}</span>
-                <span className="block text-[9px] text-slate-400 leading-snug line-clamp-1">{cat.description}</span>
+                <span className="block text-[9px] text-slate-400 leading-snug line-clamp-1">
+                  {cat.description}
+                </span>
               </div>
             </button>
           );
@@ -154,7 +178,6 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
 
       {/* Unified Recommendation Panel */}
       <div className="p-5 bg-slate-50/50 dark:bg-slate-950/40 border border-slate-100/60 dark:border-slate-800/60 rounded-2xl grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        
         <div className="lg:col-span-8 space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100/50 dark:border-blue-900/20 uppercase tracking-wide">
@@ -177,7 +200,9 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
           <div className="flex items-start gap-2 text-xs text-emerald-700 dark:text-emerald-400/90 font-semibold bg-emerald-50/20 dark:bg-emerald-950/10 p-3 rounded-lg border border-emerald-100/30 dark:border-emerald-900/20">
             <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
             <span>
-              <strong className="uppercase text-[9px] tracking-wide block text-emerald-800 dark:text-emerald-400">Real-World Audit Proof:</strong>
+              <strong className="uppercase text-[9px] tracking-wide block text-emerald-800 dark:text-emerald-400">
+                Real-World Audit Proof:
+              </strong>
               {currentRec.auditedFact}
             </span>
           </div>
@@ -209,9 +234,7 @@ export const InteractiveHelp: React.FC<InteractiveHelpProps> = ({
             View Technical Specs
           </button>
         </div>
-
       </div>
-
     </div>
   );
 };

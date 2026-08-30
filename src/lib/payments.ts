@@ -53,29 +53,31 @@ export const PAYMENT_METHODS: PaymentMethodConfig[] = [
     name: "Chapa (Debit/Credit Card, Telebirr, CBE Birr)",
     logo: "💳",
     enabled: true,
-    instructions: "Pay instantly using your Debit Card, Credit Card, Telebirr, or CBE Birr via Chapa's secured payment gateway."
+    instructions:
+      "Pay instantly using your Debit Card, Credit Card, Telebirr, or CBE Birr via Chapa's secured payment gateway.",
   },
   {
     id: "telebirr",
     name: "Telebirr (Direct)",
     logo: "📱",
     enabled: true,
-    instructions: "Authorize directly with your Telebirr mobile wallet app."
+    instructions: "Authorize directly with your Telebirr mobile wallet app.",
   },
   {
     id: "cbe_birr",
     name: "CBE Birr (Direct)",
     logo: "🏦",
     enabled: true,
-    instructions: "Pay directly using your Commercial Bank of Ethiopia (CBE) Birr account."
+    instructions: "Pay directly using your Commercial Bank of Ethiopia (CBE) Birr account.",
   },
   {
     id: "bank_transfer",
     name: "Commercial Bank Transfer",
     logo: "📋",
     enabled: true,
-    instructions: "Transfer to Commercial Bank of Ethiopia (CBE) A/C: 1000123456789. Please use your Transaction Reference as the description and submit transfer receipt."
-  }
+    instructions:
+      "Transfer to Commercial Bank of Ethiopia (CBE) A/C: 1000123456789. Please use your Transaction Reference as the description and submit transfer receipt.",
+  },
 ];
 
 /**
@@ -91,11 +93,11 @@ export async function initializePayment(details: PaymentDetails): Promise<Paymen
       },
       body: JSON.stringify(details),
     });
-    
+
     if (!res.ok) {
       throw new Error(`Server responded with ${res.status}`);
     }
-    
+
     return await res.json();
   } catch (error) {
     console.error("Payment initialization failure:", error);
@@ -103,7 +105,7 @@ export async function initializePayment(details: PaymentDetails): Promise<Paymen
       success: false,
       txRef: details.txRef,
       status: "FAILED",
-      message: getErrorMessage(error, "Failed to initialize payment gateway.")
+      message: getErrorMessage(error, "Failed to initialize payment gateway."),
     };
   }
 }
@@ -125,7 +127,8 @@ export async function verifyPaymentStatus(txRef: string): Promise<PaymentRespons
       success: false,
       txRef,
       status: "PROCESSING",
-      message: "Unable to confirm payment status at this moment. Our team will verify and update your status shortly."
+      message:
+        "Unable to confirm payment status at this moment. Our team will verify and update your status shortly.",
     };
   }
 }

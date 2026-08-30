@@ -4,7 +4,10 @@ import { useLocalization } from "../context/useLocalization";
 export const CalendarSelector: React.FC = () => {
   const { calendar, setCalendar, formatLocalizedDate } = useLocalization();
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, type: "gregorian" | "ethiopian") => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    type: "gregorian" | "ethiopian",
+  ) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       setCalendar(type);
@@ -14,8 +17,8 @@ export const CalendarSelector: React.FC = () => {
   const todayStr = formatLocalizedDate(new Date());
 
   return (
-    <div 
-      id="calendar-selector-container" 
+    <div
+      id="calendar-selector-container"
       className="flex items-center gap-1 bg-slate-800 dark:bg-slate-900 rounded-md p-0.5"
     >
       <button

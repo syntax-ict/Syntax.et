@@ -10,7 +10,11 @@ interface HeaderProps {
   onRequestConsultation: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onRequestConsultation }) => {
+export const Header: React.FC<HeaderProps> = ({
+  activeTab,
+  setActiveTab,
+  onRequestConsultation,
+}) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { t } = useLocalization();
 
@@ -19,18 +23,23 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onReque
     { id: "training", label: t("nav.training") },
     { id: "portfolio", label: t("nav.portfolio") },
     { id: "assistant", label: t("nav.aiConsultant") },
-    { id: "tracker", label: t("nav.tickets") }
+    { id: "tracker", label: t("nav.tickets") },
   ];
 
   return (
-    <header id="main-header" className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-900 transition-all shadow-sm">
+    <header
+      id="main-header"
+      className="sticky top-0 z-50 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-900 transition-all shadow-sm"
+    >
       {/* Top Localization bar */}
       <div className="bg-slate-900 text-slate-200 text-[11px] py-1.5 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{t("hero.badge")}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+              {t("hero.badge")}
+            </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             {/* Calendar Preference Selector */}
             <CalendarSelector />
@@ -46,8 +55,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onReque
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo Brand */}
-          <div 
-            onClick={() => { setActiveTab("solutions"); setMobileMenuOpen(false); }}
+          <div
+            onClick={() => {
+              setActiveTab("solutions");
+              setMobileMenuOpen(false);
+            }}
             className="flex items-center gap-2.5 cursor-pointer group"
           >
             <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-base transition-all group-hover:bg-blue-600">
@@ -85,8 +97,8 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onReque
 
           {/* Action CTAs */}
           <div className="hidden lg:flex items-center gap-3">
-            <a 
-              href="tel:+251911234567" 
+            <a
+              href="tel:+251911234567"
               className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 flex items-center gap-1.5 transition"
             >
               <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
@@ -158,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onReque
             })}
           </div>
           <div className="pt-3 border-t border-slate-100 dark:border-slate-900 flex flex-col gap-2.5">
-            <a 
+            <a
               href="tel:+251911234567"
               className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2 p-2 bg-slate-50 dark:bg-slate-900 rounded-lg"
             >

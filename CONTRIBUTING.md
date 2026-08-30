@@ -32,7 +32,7 @@ change that does not pass locally will not pass there.
 - `catch` binds `unknown`. Use `getErrorMessage(error, fallback)` from `src/lib/errors.ts`
   rather than reaching for `error.message`.
 - Type-only imports must use `import type` (`verbatimModuleSyntax` is on); `npm run
-  lint:fix` will rewrite them for you.
+lint:fix` will rewrite them for you.
 
 **React**
 

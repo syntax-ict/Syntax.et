@@ -7,9 +7,10 @@ export const AIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       role: "assistant",
-      content: "Hello! I am the **Syntax AI Business Consultant**. I specialize in aligning our 8 years of technology experience with your organization's security, networking, digital skills, or branding problems.\n\nTell me about your current bottleneck, or select one of the quick scenarios below:",
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
+      content:
+        "Hello! I am the **Syntax AI Business Consultant**. I specialize in aligning our 8 years of technology experience with your organization's security, networking, digital skills, or branding problems.\n\nTell me about your current bottleneck, or select one of the quick scenarios below:",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,10 +18,22 @@ export const AIAssistant: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestedPrompts = [
-    { label: "Biometric Attendance & Security gates", text: "We need an integrated biometric attendance clock-in system and secure gate controls for 150 staff to solve buddy punching." },
-    { label: "Slow network & ongoing computer crashes", text: "Our corporate network drops constantly and office computers are slow. What ongoing maintenance SLA do you recommend?" },
-    { label: "Hands-on CCTV training classes", text: "I want to study modern IP cameras and security systems. What professional courses and schedules do you have?" },
-    { label: "Brand signboards & printing support", text: "We are moving offices and need outdoor LED lightboxes, acrylic internal branding, and premium stationery printing." }
+    {
+      label: "Biometric Attendance & Security gates",
+      text: "We need an integrated biometric attendance clock-in system and secure gate controls for 150 staff to solve buddy punching.",
+    },
+    {
+      label: "Slow network & ongoing computer crashes",
+      text: "Our corporate network drops constantly and office computers are slow. What ongoing maintenance SLA do you recommend?",
+    },
+    {
+      label: "Hands-on CCTV training classes",
+      text: "I want to study modern IP cameras and security systems. What professional courses and schedules do you have?",
+    },
+    {
+      label: "Brand signboards & printing support",
+      text: "We are moving offices and need outdoor LED lightboxes, acrylic internal branding, and premium stationery printing.",
+    },
   ];
 
   const scrollToBottom = () => {
@@ -38,10 +51,10 @@ export const AIAssistant: React.FC = () => {
     const userMsg: AssistantMessage = {
       role: "user",
       content: textToSend,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
@@ -50,28 +63,40 @@ export const AIAssistant: React.FC = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [...messages, userMsg].map(m => ({ role: m.role, content: m.content }))
-        })
+          messages: [...messages, userMsg].map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: data.text,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.text,
+            timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          },
+        ]);
       } else {
         throw new Error(data.error || "Failed to receive consultant advice");
       }
     } catch (err) {
-      setError(getErrorMessage(err, "Failed to communicate with Syntax AI. Please check server connections."));
+      setError(
+        getErrorMessage(
+          err,
+          "Failed to communicate with Syntax AI. Please check server connections.",
+        ),
+      );
       // Fallback response inside the chat
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "I apologize, but my real-time Gemini pipeline is currently experiencing connection problems. \n\nHowever, you can directly launch our high-fidelity **Consultation** or **Quotation** builders using the CTAs on our solutions page to get a professional evaluation!",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I apologize, but my real-time Gemini pipeline is currently experiencing connection problems. \n\nHowever, you can directly launch our high-fidelity **Consultation** or **Quotation** builders using the CTAs on our solutions page to get a professional evaluation!",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
@@ -90,7 +115,11 @@ export const AIAssistant: React.FC = () => {
         if (match.index > lastIndex) {
           parts.push(para.substring(lastIndex, match.index));
         }
-        parts.push(<strong key={match.index} className="font-bold text-slate-900 dark:text-white">{match[1]}</strong>);
+        parts.push(
+          <strong key={match.index} className="font-bold text-slate-900 dark:text-white">
+            {match[1]}
+          </strong>,
+        );
         lastIndex = boldRegex.lastIndex;
       }
       if (lastIndex < para.length) {
@@ -98,7 +127,11 @@ export const AIAssistant: React.FC = () => {
       }
 
       // Check for lists
-      if (para.trim().startsWith("1.") || para.trim().startsWith("-") || para.trim().startsWith("•")) {
+      if (
+        para.trim().startsWith("1.") ||
+        para.trim().startsWith("-") ||
+        para.trim().startsWith("•")
+      ) {
         return (
           <div key={i} className="pl-4 space-y-1.5 my-2">
             {para.split("\n").map((line, idx) => {
@@ -111,7 +144,11 @@ export const AIAssistant: React.FC = () => {
                 if (lMatch.index > lLastIdx) {
                   lineParts.push(cleanLine.substring(lLastIdx, lMatch.index));
                 }
-                lineParts.push(<strong key={lMatch.index} className="font-bold text-slate-900 dark:text-white">{lMatch[1]}</strong>);
+                lineParts.push(
+                  <strong key={lMatch.index} className="font-bold text-slate-900 dark:text-white">
+                    {lMatch[1]}
+                  </strong>,
+                );
                 lLastIdx = boldRegex.lastIndex;
               }
               if (lLastIdx < cleanLine.length) {
@@ -130,7 +167,10 @@ export const AIAssistant: React.FC = () => {
       }
 
       return (
-        <p key={i} className="text-xs md:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        <p
+          key={i}
+          className="text-xs md:text-sm leading-relaxed text-slate-700 dark:text-slate-300"
+        >
           {parts.length > 0 ? parts : para}
         </p>
       );
@@ -138,7 +178,10 @@ export const AIAssistant: React.FC = () => {
   };
 
   return (
-    <div id="ai-assistant-root" className="flex flex-col h-[600px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+    <div
+      id="ai-assistant-root"
+      className="flex flex-col h-[600px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm"
+    >
       {/* Assistant Header */}
       <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -147,10 +190,14 @@ export const AIAssistant: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h4 className="text-sm font-bold text-slate-950 dark:text-white">Syntax Business Architect</h4>
+              <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                Syntax Business Architect
+              </h4>
               <span className="flex h-2 w-2 rounded-full bg-emerald-500" title="Active"></span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Powered by Gemini 3.7-Flash • 8Y Experience</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              Powered by Gemini 3.7-Flash • 8Y Experience
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-950/30 border border-blue-100/50 dark:border-blue-900/30 text-[10px] text-blue-700 dark:text-blue-400 font-semibold">
@@ -168,25 +215,29 @@ export const AIAssistant: React.FC = () => {
               key={idx}
               className={`flex gap-3 max-w-[85%] ${isUser ? "ml-auto flex-row-reverse" : "mr-auto"}`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
-                isUser 
-                  ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" 
-                  : "bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                  isUser
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+                    : "bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400"
+                }`}
+              >
                 {isUser ? "U" : "S"}
               </div>
               <div className="space-y-1">
-                <div className={`px-4 py-3 rounded-2xl border ${
-                  isUser
-                    ? "bg-blue-600 border-blue-600 text-white rounded-tr-xs"
-                    : "bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 rounded-tl-xs"
-                }`}>
+                <div
+                  className={`px-4 py-3 rounded-2xl border ${
+                    isUser
+                      ? "bg-blue-600 border-blue-600 text-white rounded-tr-xs"
+                      : "bg-slate-50/50 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800 rounded-tl-xs"
+                  }`}
+                >
                   {isUser ? (
-                    <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                    <p className="text-xs md:text-sm leading-relaxed whitespace-pre-wrap">
+                      {m.content}
+                    </p>
                   ) : (
-                    <div className="space-y-2.5">
-                      {renderMessageContent(m.content)}
-                    </div>
+                    <div className="space-y-2.5">{renderMessageContent(m.content)}</div>
                   )}
                 </div>
                 <p className={`text-[9px] text-slate-400 ${isUser ? "text-right" : "text-left"}`}>
@@ -234,7 +285,9 @@ export const AIAssistant: React.FC = () => {
                 onClick={() => handleSend(sp.text)}
                 className="p-2.5 bg-white dark:bg-slate-800 hover:bg-blue-50/30 dark:hover:bg-blue-950/10 hover:border-blue-200 dark:hover:border-blue-900 border border-slate-200/60 dark:border-slate-700 rounded-xl text-left transition select-none"
               >
-                <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">{sp.label}</span>
+                <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {sp.label}
+                </span>
                 <span className="block text-[10px] text-slate-400 truncate mt-0.5">{sp.text}</span>
               </button>
             ))}

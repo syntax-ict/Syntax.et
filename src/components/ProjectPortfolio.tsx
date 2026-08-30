@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  ArrowLeft, 
-  Layers, 
-  Briefcase, 
-  Tag, 
-  Cpu, 
-  CheckCircle, 
+import {
+  ArrowLeft,
+  Layers,
+  Briefcase,
+  Tag,
+  Cpu,
+  CheckCircle,
   ArrowRight,
   Wrench,
   Sun,
   Moon,
-  Database
+  Database,
 } from "lucide-react";
 import { PORTFOLIO_PROJECTS } from "../data";
 import { useLocalization } from "../context/useLocalization";
@@ -25,7 +25,7 @@ const CCTVMapSchematic: React.FC = () => {
     { id: "cam-2", label: "Server Room CCTV", x: 280, y: 50, type: "camera" },
     { id: "gate-1", label: "Biometric Turnstile A", x: 120, y: 150, type: "biometric" },
     { id: "gate-2", label: "Biometric Turnstile B", x: 220, y: 150, type: "biometric" },
-    { id: "nvr-node", label: "32-Ch NVR Server Stack", x: 170, y: 240, type: "server" }
+    { id: "nvr-node", label: "32-Ch NVR Server Stack", x: 170, y: 240, type: "server" },
   ];
 
   return (
@@ -33,7 +33,9 @@ const CCTVMapSchematic: React.FC = () => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-black">Live Security Grid Topology</span>
+          <span className="text-[10px] font-mono tracking-widest text-emerald-400 uppercase font-black">
+            Live Security Grid Topology
+          </span>
         </div>
         <span className="text-[9px] text-slate-500 font-mono">Click components to test signal</span>
       </div>
@@ -47,12 +49,42 @@ const CCTVMapSchematic: React.FC = () => {
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
-          
+
           {/* Signal paths to NVR */}
-          <line x1="60" y1="50" x2="170" y2="240" stroke={activeNode === "cam-1" ? "#10b981" : "#1e293b"} strokeWidth={activeNode === "cam-1" ? "2" : "1.5"} strokeDasharray="4 2" />
-          <line x1="280" y1="50" x2="170" y2="240" stroke={activeNode === "cam-2" ? "#10b981" : "#1e293b"} strokeWidth={activeNode === "cam-2" ? "2" : "1.5"} strokeDasharray="4 2" />
-          <line x1="120" y1="150" x2="170" y2="240" stroke={activeNode === "gate-1" ? "#10b981" : "#1e293b"} strokeWidth={activeNode === "gate-1" ? "2" : "1.5"} />
-          <line x1="220" y1="150" x2="170" y2="240" stroke={activeNode === "gate-2" ? "#10b981" : "#1e293b"} strokeWidth={activeNode === "gate-2" ? "2" : "1.5"} />
+          <line
+            x1="60"
+            y1="50"
+            x2="170"
+            y2="240"
+            stroke={activeNode === "cam-1" ? "#10b981" : "#1e293b"}
+            strokeWidth={activeNode === "cam-1" ? "2" : "1.5"}
+            strokeDasharray="4 2"
+          />
+          <line
+            x1="280"
+            y1="50"
+            x2="170"
+            y2="240"
+            stroke={activeNode === "cam-2" ? "#10b981" : "#1e293b"}
+            strokeWidth={activeNode === "cam-2" ? "2" : "1.5"}
+            strokeDasharray="4 2"
+          />
+          <line
+            x1="120"
+            y1="150"
+            x2="170"
+            y2="240"
+            stroke={activeNode === "gate-1" ? "#10b981" : "#1e293b"}
+            strokeWidth={activeNode === "gate-1" ? "2" : "1.5"}
+          />
+          <line
+            x1="220"
+            y1="150"
+            x2="170"
+            y2="240"
+            stroke={activeNode === "gate-2" ? "#10b981" : "#1e293b"}
+            strokeWidth={activeNode === "gate-2" ? "2" : "1.5"}
+          />
         </svg>
 
         {/* Nodes rendering */}
@@ -64,14 +96,18 @@ const CCTVMapSchematic: React.FC = () => {
               onClick={() => setActiveNode(node.id)}
               style={{ left: `${node.x}px`, top: `${node.y}px` }}
               className={`absolute -translate-x-1/2 -translate-y-1/2 p-2.5 rounded-lg border transition-all ${
-                isActive 
-                  ? "bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20" 
+                isActive
+                  ? "bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20"
                   : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
               }`}
             >
               <div className="flex flex-col items-center gap-1">
-                <Cpu className={`w-4 h-4 ${isActive ? "text-emerald-400 animate-bounce" : "text-slate-400"}`} />
-                <span className="text-[8px] font-mono whitespace-nowrap font-bold">{node.id.toUpperCase()}</span>
+                <Cpu
+                  className={`w-4 h-4 ${isActive ? "text-emerald-400 animate-bounce" : "text-slate-400"}`}
+                />
+                <span className="text-[8px] font-mono whitespace-nowrap font-bold">
+                  {node.id.toUpperCase()}
+                </span>
               </div>
             </button>
           );
@@ -82,7 +118,7 @@ const CCTVMapSchematic: React.FC = () => {
         {activeNode ? (
           <div className="text-center space-y-1">
             <p className="text-xs font-bold text-white">
-              {nodes.find(n => n.id === activeNode)?.label}
+              {nodes.find((n) => n.id === activeNode)?.label}
             </p>
             <p className="text-[10px] text-emerald-400 font-mono">
               Status: SECURE & BULLPROOF • Signal Strength: 100% • PoE Active
@@ -106,7 +142,9 @@ const NetworkTopologySchematic: React.FC = () => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-          <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-black">Structured Cat6 Rack Routing</span>
+          <span className="text-[10px] font-mono tracking-widest text-blue-400 uppercase font-black">
+            Structured Cat6 Rack Routing
+          </span>
         </div>
         <span className="text-[9px] text-slate-500 font-mono">Multi-Floor Switch Isolation</span>
       </div>
@@ -121,8 +159,8 @@ const NetworkTopologySchematic: React.FC = () => {
                 key={floor}
                 onClick={() => setActiveFloor(floor)}
                 className={`px-3 py-1 text-[10px] font-bold rounded ${
-                  activeFloor === floor 
-                    ? "bg-blue-600 text-white" 
+                  activeFloor === floor
+                    ? "bg-blue-600 text-white"
                     : "bg-slate-800 text-slate-400 hover:bg-slate-750"
                 }`}
               >
@@ -142,17 +180,19 @@ const NetworkTopologySchematic: React.FC = () => {
               // Simulate active ports depending on floor
               const isActive = (i * activeFloor) % 3 !== 0;
               return (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`aspect-square rounded border flex flex-col items-center justify-center p-1 transition-all ${
-                    isActive 
-                      ? "bg-emerald-950/50 border-emerald-500 text-emerald-400" 
+                    isActive
+                      ? "bg-emerald-950/50 border-emerald-500 text-emerald-400"
                       : "bg-slate-800 border-slate-700 text-slate-500"
                   }`}
                   title={`Switch Port ${i + 1} - ${isActive ? "Gigabit Active" : "Unconnected"}`}
                 >
                   <span className="text-[8px] font-mono">{i + 1}</span>
-                  <span className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isActive ? "bg-emerald-400 animate-pulse" : "bg-slate-650"}`}></span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full mt-0.5 ${isActive ? "bg-emerald-400 animate-pulse" : "bg-slate-650"}`}
+                  ></span>
                 </div>
               );
             })}
@@ -182,13 +222,17 @@ const LightboxInteractiveSchematic: React.FC = () => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-          <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase font-black">Twilight-Sensor Signage Control</span>
+          <span className="text-[10px] font-mono tracking-widest text-amber-400 uppercase font-black">
+            Twilight-Sensor Signage Control
+          </span>
         </div>
         <span className="text-[9px] text-slate-500 font-mono">Simulation</span>
       </div>
 
       <div className="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-        <span className="text-[10px] text-slate-400 font-mono font-bold">Ambient Light Sensor Trigger:</span>
+        <span className="text-[10px] text-slate-400 font-mono font-bold">
+          Ambient Light Sensor Trigger:
+        </span>
         <button
           onClick={() => setIsNightMode(!isNightMode)}
           className="px-3.5 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1.5 transition bg-slate-800 border border-slate-700 text-white hover:bg-slate-750"
@@ -210,20 +254,24 @@ const LightboxInteractiveSchematic: React.FC = () => {
       {/* Storefront Sign Visualizer */}
       <div className="relative h-44 rounded-xl overflow-hidden border border-slate-800 flex flex-col items-center justify-center transition-colors duration-500 bg-slate-900">
         {/* Sky Background Overlay */}
-        <div className={`absolute inset-0 transition-opacity duration-1000 ${isNightMode ? "bg-slate-950 opacity-95" : "bg-sky-100 opacity-95"}`}></div>
+        <div
+          className={`absolute inset-0 transition-opacity duration-1000 ${isNightMode ? "bg-slate-950 opacity-95" : "bg-sky-100 opacity-95"}`}
+        ></div>
 
         {/* Storefront Layout */}
         <div className="relative z-10 text-center space-y-4 w-full px-6">
           <div className="border-b border-dashed border-slate-700/50 pb-2">
-            <span className={`text-[9px] font-mono ${isNightMode ? "text-slate-400" : "text-slate-600"}`}>
+            <span
+              className={`text-[9px] font-mono ${isNightMode ? "text-slate-400" : "text-slate-600"}`}
+            >
               KIGALI COMMERCIAL DISTRICT SIGN BOARD
             </span>
           </div>
 
-          <div 
+          <div
             className={`py-3 px-8 rounded border transition-all duration-700 font-black text-lg tracking-widest uppercase ${
-              isNightMode 
-                ? "bg-slate-900 border-amber-500 text-amber-400 shadow-lg shadow-amber-500/20 scale-102" 
+              isNightMode
+                ? "bg-slate-900 border-amber-500 text-amber-400 shadow-lg shadow-amber-500/20 scale-102"
                 : "bg-slate-200 border-slate-300 text-slate-700"
             }`}
           >
@@ -251,13 +299,18 @@ interface ProjectPortfolioProps {
 export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchConsultation }) => {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const { t } = useLocalization();
-  
+
   // Filtering States
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedSector, setSelectedSector] = useState<string>("All");
 
   // Fetch unique categories & sectors for drop-downs / selectors
-  const categories = ["All", "Security & Intelligent Systems", "Enterprise IT Infrastructure", "Business Technology & Automation"];
+  const categories = [
+    "All",
+    "Security & Intelligent Systems",
+    "Enterprise IT Infrastructure",
+    "Business Technology & Automation",
+  ];
   const sectors = ["All", "Government", "Private Enterprise", "Retail Hub"];
 
   // Filtered Projects
@@ -271,7 +324,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
   // Selected Project Object
   const selectedProject = useMemo(() => {
-    return PORTFOLIO_PROJECTS.find(p => p.id === selectedProjectId) || null;
+    return PORTFOLIO_PROJECTS.find((p) => p.id === selectedProjectId) || null;
   }, [selectedProjectId]);
 
   // Direct reset helper
@@ -313,7 +366,9 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
               <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-50 dark:border-slate-800/60 pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">Discovery Filter Engine</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+                    Discovery Filter Engine
+                  </span>
                 </div>
                 <button
                   onClick={handleResetFilters}
@@ -374,11 +429,14 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
               {/* Filtering summary stats */}
               <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400 font-mono">
                 <span>
-                  Showing {filteredProjects.length} of {PORTFOLIO_PROJECTS.length} verified deployments
+                  Showing {filteredProjects.length} of {PORTFOLIO_PROJECTS.length} verified
+                  deployments
                 </span>
                 {(selectedCategory !== "All" || selectedSector !== "All") && (
                   <span className="text-blue-500 font-bold">
-                    Active Filters: {selectedCategory !== "All" ? `[Pillar: ${selectedCategory}]` : ""} {selectedSector !== "All" ? `[Sector: ${selectedSector}]` : ""}
+                    Active Filters:{" "}
+                    {selectedCategory !== "All" ? `[Pillar: ${selectedCategory}]` : ""}{" "}
+                    {selectedSector !== "All" ? `[Sector: ${selectedSector}]` : ""}
                   </span>
                 )}
               </div>
@@ -417,7 +475,9 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
                     {/* Quick highlights / deliverables */}
                     <div className="space-y-1.5 pt-2 border-t border-slate-50 dark:border-slate-800/50">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Key Deliverable Highlights:</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        Key Deliverable Highlights:
+                      </span>
                       <ul className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
                         {project.deliverables.slice(0, 2).map((del, i) => (
                           <li key={i} className="flex items-center gap-1.5">
@@ -472,7 +532,8 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   Need customized hardware configuration?
                 </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Our certified field technicians design specific custom blueprints matching high-level requirements. Speak to a live technical architect.
+                  Our certified field technicians design specific custom blueprints matching
+                  high-level requirements. Speak to a live technical architect.
                 </p>
               </div>
               <button
@@ -506,7 +567,6 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
             {/* Detailed Presentation Panel */}
             <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-              
               {/* Cover Header Banner */}
               <div className="p-6 sm:p-8 bg-slate-950 text-white border-b border-slate-800 relative">
                 <div className="absolute top-4 right-4 text-[10px] font-mono text-slate-500 font-bold uppercase">
@@ -528,15 +588,25 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800/80 text-[11px] text-slate-400 font-mono">
                     <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Sector/Client Segment:</span>
-                      <span className="text-slate-200 font-bold">{selectedProject.clientType} Field Deployment</span>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">
+                        Sector/Client Segment:
+                      </span>
+                      <span className="text-slate-200 font-bold">
+                        {selectedProject.clientType} Field Deployment
+                      </span>
                     </div>
                     <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Industry:</span>
-                      <span className="text-slate-200 font-bold">{selectedProject.industry || "Enterprise Architecture"}</span>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">
+                        Industry:
+                      </span>
+                      <span className="text-slate-200 font-bold">
+                        {selectedProject.industry || "Enterprise Architecture"}
+                      </span>
                     </div>
                     <div>
-                      <span className="block text-[9px] font-bold text-slate-500 uppercase">Primary Verification Status:</span>
+                      <span className="block text-[9px] font-bold text-slate-500 uppercase">
+                        Primary Verification Status:
+                      </span>
                       <span className="text-emerald-400 font-bold">✓ 100% AUDITED PROOF</span>
                     </div>
                   </div>
@@ -545,10 +615,8 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
               {/* Main Case Study Body Sections */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-8">
-                
                 {/* Structural Chronological Roadmap Steps */}
                 <div className="lg:col-span-8 space-y-10">
-                  
                   {/* STEP 1: CHALLENGE */}
                   <div className="space-y-4 relative pl-6 border-l-2 border-red-500/30">
                     {/* Floating step pill */}
@@ -556,11 +624,16 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       1
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider block font-mono">{t("portfolio.challenge")}</span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">The Operational Problem</h3>
+                      <span className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase tracking-wider block font-mono">
+                        {t("portfolio.challenge")}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        The Operational Problem
+                      </h3>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed font-normal">
-                      {selectedProject.challenge || "Detail logs detailing the precise physical structural limits of the original degraded customer installation."}
+                      {selectedProject.challenge ||
+                        "Detail logs detailing the precise physical structural limits of the original degraded customer installation."}
                     </p>
                   </div>
 
@@ -570,8 +643,12 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       2
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider block font-mono">{t("portfolio.solution")}</span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">The Engineering Resolution</h3>
+                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider block font-mono">
+                        {t("portfolio.solution")}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        The Engineering Resolution
+                      </h3>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
                       {selectedProject.solutionDetail || selectedProject.description}
@@ -584,28 +661,42 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       3
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider block font-mono">{t("portfolio.implementation")}</span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Scope of Work & Interactive Blueprint Map</h3>
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-wider block font-mono">
+                        {t("portfolio.implementation")}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        Scope of Work & Interactive Blueprint Map
+                      </h3>
                     </div>
 
                     {/* Step-by-Step Scope Bullets */}
                     <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl border border-slate-100 dark:border-slate-850 space-y-3">
-                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tactical Field Tasks Performed:</span>
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Tactical Field Tasks Performed:
+                      </span>
                       <ul className="space-y-2 text-xs">
                         {selectedProject.scopeOfImplementation?.map((task, idx) => (
-                          <li key={idx} className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300">
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300"
+                          >
                             <Wrench className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
                             <span>{task}</span>
                           </li>
                         )) || (
-                          <li className="text-slate-500 italic">No specific task list configured. Standard site-survey & hardware deployment steps successfully completed.</li>
+                          <li className="text-slate-500 italic">
+                            No specific task list configured. Standard site-survey & hardware
+                            deployment steps successfully completed.
+                          </li>
                         )}
                       </ul>
                     </div>
 
                     {/* DYNAMIC CASE-STUDY TECHNICAL IMAGE/DIAGRAM */}
                     <div className="space-y-2">
-                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Technical Grid Diagram:</span>
+                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Technical Grid Diagram:
+                      </span>
                       {selectedProject.id === "proj-1" && <CCTVMapSchematic />}
                       {selectedProject.id === "proj-2" && <NetworkTopologySchematic />}
                       {selectedProject.id === "proj-3" && <LightboxInteractiveSchematic />}
@@ -618,8 +709,12 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       4
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider block font-mono">{t("portfolio.result")}</span>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">Operational Results achieved</h3>
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider block font-mono">
+                        {t("portfolio.result")}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">
+                        Operational Results achieved
+                      </h3>
                     </div>
                     <div className="bg-emerald-50/20 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/30 p-5 rounded-2xl space-y-3">
                       <p className="text-xs text-slate-700 dark:text-slate-350 leading-relaxed font-semibold">
@@ -627,25 +722,30 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-emerald-100/30 dark:border-emerald-900/20">
                         {selectedProject.results.map((res, i) => (
-                          <div key={i} className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-emerald-500/20 text-center">
+                          <div
+                            key={i}
+                            className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-emerald-500/20 text-center"
+                          >
                             <CheckCircle className="w-4 h-4 text-emerald-500 mx-auto mb-1.5" />
-                            <p className="text-[11px] font-bold text-slate-800 dark:text-white leading-tight">{res}</p>
+                            <p className="text-[11px] font-bold text-slate-800 dark:text-white leading-tight">
+                              {res}
+                            </p>
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
-
                 </div>
 
                 {/* Sidebar Specifications */}
                 <div className="lg:col-span-4 space-y-6">
-                  
                   {/* Delivered physical systems */}
                   <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl border border-slate-100 dark:border-slate-850/80 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
                       <Cpu className="w-4 h-4 text-blue-500" />
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">{t("portfolio.installedHardware")}</h4>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+                        {t("portfolio.installedHardware")}
+                      </h4>
                     </div>
                     <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-350">
                       {selectedProject.deliverables.map((del, idx) => (
@@ -661,18 +761,22 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-2xl border border-slate-100 dark:border-slate-850/80 space-y-4">
                     <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
                       <Database className="w-4 h-4 text-amber-500" />
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">{t("portfolio.techInvolved")}</h4>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+                        {t("portfolio.techInvolved")}
+                      </h4>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {selectedProject.technologiesInvolved?.map((tech, i) => (
-                        <span 
-                          key={i} 
+                        <span
+                          key={i}
                           className="text-[10px] font-mono font-bold px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300"
                         >
                           {tech}
                         </span>
                       )) || (
-                        <span className="text-[10px] text-slate-400 italic">No specific system parameters logged.</span>
+                        <span className="text-[10px] text-slate-400 italic">
+                          No specific system parameters logged.
+                        </span>
                       )}
                     </div>
                   </div>
@@ -684,19 +788,15 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   >
                     ← {t("common.back")}
                   </button>
-
                 </div>
-
               </div>
-
             </div>
 
             {/* HIGH CONVERSION CASE STUDY PANEL CTA */}
             <div className="bg-slate-950 text-white p-8 sm:p-10 rounded-2xl border border-slate-800 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-              
               {/* Soft decorative visual background accents */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-              
+
               <div className="space-y-2 relative z-10 text-center md:text-left max-w-2xl">
                 <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest block font-mono">
                   {t("portfolio.similarChallenge")}
@@ -705,7 +805,9 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   Request a Custom Technical Consultation
                 </h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
-                  Let Syntax field engineers plan, budget, and deploy your physical infrastructure project following global standards. Provide your parameters inside our wizard form to schedule a site survey.
+                  Let Syntax field engineers plan, budget, and deploy your physical infrastructure
+                  project following global standards. Provide your parameters inside our wizard form
+                  to schedule a site survey.
                 </p>
               </div>
 
@@ -723,7 +825,6 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   {t("common.cancel")}
                 </button>
               </div>
-
             </div>
           </motion.div>
         )}

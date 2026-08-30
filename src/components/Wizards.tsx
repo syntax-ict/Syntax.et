@@ -1,5 +1,17 @@
 import React, { useState } from "react";
-import { Check, Send, AlertCircle, HelpCircle, Loader2, DollarSign, Calendar, Shield, Cpu, BookOpen, Printer } from "lucide-react";
+import {
+  Check,
+  Send,
+  AlertCircle,
+  HelpCircle,
+  Loader2,
+  DollarSign,
+  Calendar,
+  Shield,
+  Cpu,
+  BookOpen,
+  Printer,
+} from "lucide-react";
 import { PaymentCheckout } from "./PaymentCheckout";
 import { initializePayment } from "../lib/payments";
 import { getErrorMessage } from "../lib/errors";
@@ -28,18 +40,20 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
     problemArea: "Technology Solutions",
     urgency: "Medium",
     budget: "$1,000 - $5,000",
-    details: ""
+    details: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 3) {
-      setStep(prev => prev + 1);
+      setStep((prev) => prev + 1);
       return;
     }
 
@@ -52,15 +66,15 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "consultation",
-          data: formData
-        })
+          data: formData,
+        }),
       });
 
       const result = await response.json();
       if (result.success) {
         // Lead created successfully. Initialize payment simulation
         const generatedTxRef = `ST-CONS-${Date.now().toString(36).toUpperCase()}`;
-        
+
         const paymentRes = await initializePayment({
           txRef: generatedTxRef,
           amount: 250, // 250 Birr refundable consultation fee
@@ -69,7 +83,7 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
           phone: formData.phone,
           name: formData.name,
           description: `Consultation Reservation Fee - ${formData.organization}`,
-          provider: "chapa"
+          provider: "chapa",
         });
 
         if (paymentRes.success) {
@@ -93,9 +107,17 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
 
   if (showPaymentCheckout && txRef) {
     return (
-      <div id="consultation-wizard-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Secure Consultation Deposit</h3>
-        <p className="text-xs text-slate-500 mb-6">Syntax Technology secures bookings with a small simulated deposit to protect field engineer schedules.</p>
+      <div
+        id="consultation-wizard-container"
+        className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in"
+      >
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          Secure Consultation Deposit
+        </h3>
+        <p className="text-xs text-slate-500 mb-6">
+          Syntax Technology secures bookings with a small simulated deposit to protect field
+          engineer schedules.
+        </p>
         <PaymentCheckout
           txRef={txRef}
           onVerificationComplete={(status) => {
@@ -118,9 +140,14 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
   }
 
   return (
-    <div id="consultation-wizard-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+    <div
+      id="consultation-wizard-container"
+      className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+    >
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t("solutions.requestConsult")}</h3>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+          {t("solutions.requestConsult")}
+        </h3>
         {step < 4 && (
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
             Step {formatNumber(step)} of {formatNumber(3)}
@@ -136,9 +163,17 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
       )}
 
       {step === 1 && (
-        <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setStep(2);
+          }}
+          className="space-y-4"
+        >
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.name")} *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {t("form.name")} *
+            </label>
             <input
               type="text"
               name="name"
@@ -150,7 +185,9 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.organization")} *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              {t("form.organization")} *
+            </label>
             <input
               type="text"
               name="organization"
@@ -163,7 +200,9 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.email")} *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t("form.email")} *
+              </label>
               <input
                 type="email"
                 name="email"
@@ -175,7 +214,9 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.phone")} *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t("form.phone")} *
+              </label>
               <input
                 type="tel"
                 name="phone"
@@ -197,24 +238,42 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
       )}
 
       {step === 2 && (
-        <form onSubmit={(e) => { e.preventDefault(); setStep(3); }} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setStep(3);
+          }}
+          className="space-y-4"
+        >
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Primary Problem Area *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Primary Problem Area *
+            </label>
             <select
               name="problemArea"
               value={formData.problemArea}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Technology Solutions">Technology Solutions (IT, Networks, OS Maintenance)</option>
-              <option value="Security & Smart Systems">Security & Smart Systems (CCTV, Biometrics, GPS)</option>
-              <option value="Professional Training">Professional Training (Corporate or Short-Term)</option>
-              <option value="Business Support">Business Support (Printing, Signage, Branding)</option>
+              <option value="Technology Solutions">
+                Technology Solutions (IT, Networks, OS Maintenance)
+              </option>
+              <option value="Security & Smart Systems">
+                Security & Smart Systems (CCTV, Biometrics, GPS)
+              </option>
+              <option value="Professional Training">
+                Professional Training (Corporate or Short-Term)
+              </option>
+              <option value="Business Support">
+                Business Support (Printing, Signage, Branding)
+              </option>
             </select>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.urgency")} *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t("form.urgency")} *
+              </label>
               <select
                 name="urgency"
                 value={formData.urgency}
@@ -227,7 +286,9 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t("form.budget")} *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                {t("form.budget")} *
+              </label>
               <select
                 name="budget"
                 value={formData.budget}
@@ -279,8 +340,12 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg text-xs space-y-2 text-slate-600 dark:text-slate-400">
             <p className="font-semibold text-slate-900 dark:text-white">Form Verification:</p>
             <p>• Lead type: Qualified Business Inquiry</p>
-            <p>• Contact: {formData.name} ({formData.organization})</p>
-            <p>• Category: {formData.problemArea} | Urgency: {formData.urgency}</p>
+            <p>
+              • Contact: {formData.name} ({formData.organization})
+            </p>
+            <p>
+              • Category: {formData.problemArea} | Urgency: {formData.urgency}
+            </p>
           </div>
 
           <div className="flex gap-3 mt-4">
@@ -319,7 +384,9 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
             <Check className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white">{t("form.successTitle")}</h4>
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+              {t("form.successTitle")}
+            </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
               {t("form.successDesc")}
             </p>
@@ -339,7 +406,7 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
                   problemArea: "Technology Solutions",
                   urgency: "Medium",
                   budget: "$1,000 - $5,000",
-                  details: ""
+                  details: "",
                 });
               }}
               className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium rounded-lg transition"
@@ -368,7 +435,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [timeline, setTimeline] = useState("Within 30 days");
-  
+
   const [isPriority, setIsPriority] = useState(true);
   const [showPaymentCheckout, setShowPaymentCheckout] = useState(false);
   const [txRef, setTxRef] = useState("");
@@ -379,7 +446,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
     email: "",
     phone: "",
     organization: "",
-    details: ""
+    details: "",
   });
 
   const availableServices = [
@@ -388,21 +455,19 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
     { id: "net", name: "IT Network Structured Cabling", baseCost: 120, icon: Cpu },
     { id: "maintenance", name: "Computer Hardware Maintenance SLA", baseCost: 80, icon: Cpu },
     { id: "branding", name: "Corporate Print & Store Signage", baseCost: 500, icon: Printer },
-    { id: "training", name: "Corporate Group Skills Course", baseCost: 950, icon: BookOpen }
+    { id: "training", name: "Corporate Group Skills Course", baseCost: 950, icon: BookOpen },
   ];
 
   const handleToggleService = (serviceName: string) => {
-    setSelectedServices(prev =>
-      prev.includes(serviceName)
-        ? prev.filter(s => s !== serviceName)
-        : [...prev, serviceName]
+    setSelectedServices((prev) =>
+      prev.includes(serviceName) ? prev.filter((s) => s !== serviceName) : [...prev, serviceName],
     );
   };
 
   const calculateEstimate = () => {
     let total = 0;
-    selectedServices.forEach(sName => {
-      const s = availableServices.find(as => as.name === sName);
+    selectedServices.forEach((sName) => {
+      const s = availableServices.find((as) => as.name === sName);
       if (s) {
         if (s.id === "net" || s.id === "maintenance") {
           total += s.baseCost * quantity; // Scaled by nodes/computers
@@ -431,7 +496,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
       quantity,
       timeline,
       estimatedBaseCost: `$${estimate}`,
-      prioritySLA: isPriority ? "Priority (500 ETB Deposit)" : "Standard (Free)"
+      prioritySLA: isPriority ? "Priority (500 ETB Deposit)" : "Standard (Free)",
     };
 
     try {
@@ -440,8 +505,8 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "quote",
-          data: dataPayload
-        })
+          data: dataPayload,
+        }),
       });
 
       const result = await response.json();
@@ -456,7 +521,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
             phone: clientInfo.phone,
             name: clientInfo.name,
             description: `Priority Survey Deposit - ${clientInfo.organization}`,
-            provider: "chapa"
+            provider: "chapa",
           });
 
           if (paymentRes.success) {
@@ -485,9 +550,17 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
 
   if (showPaymentCheckout && txRef) {
     return (
-      <div id="quote-wizard-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in">
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Secure Priority Audit Deposit</h3>
-        <p className="text-xs text-slate-500 mb-6">Authorize a Priority Survey Booking deposit securely through our local payment gateway simulation.</p>
+      <div
+        id="quote-wizard-container"
+        className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in"
+      >
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          Secure Priority Audit Deposit
+        </h3>
+        <p className="text-xs text-slate-500 mb-6">
+          Authorize a Priority Survey Booking deposit securely through our local payment gateway
+          simulation.
+        </p>
         <PaymentCheckout
           txRef={txRef}
           onVerificationComplete={(status) => {
@@ -510,9 +583,17 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   }
 
   return (
-    <div id="quote-wizard-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Dynamic Quote & Proposal Estimator</h3>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Select your required services, scale, and timeline to view a high-level estimate and request a formal quotation.</p>
+    <div
+      id="quote-wizard-container"
+      className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+    >
+      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+        Dynamic Quote & Proposal Estimator
+      </h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+        Select your required services, scale, and timeline to view a high-level estimate and request
+        a formal quotation.
+      </p>
 
       {success ? (
         <div className="text-center py-6 space-y-4">
@@ -520,14 +601,24 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
             <Check className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Quotation Request Logged!</h4>
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+              Quotation Request Logged!
+            </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-              Your customized estimate has been submitted to the Syntax Business Support division. An official stamped PDF quotation will be dispatched to your email address shortly.
+              Your customized estimate has been submitted to the Syntax Business Support division.
+              An official stamped PDF quotation will be dispatched to your email address shortly.
             </p>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg text-left text-xs max-w-md mx-auto space-y-2">
-            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">Submission Details:</p>
-            <p>• Estimated Total: <span className="font-bold text-emerald-600 dark:text-emerald-400">${calculateEstimate()}</span></p>
+            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">
+              Submission Details:
+            </p>
+            <p>
+              • Estimated Total:{" "}
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                ${calculateEstimate()}
+              </span>
+            </p>
             <p>• Items: {selectedServices.join(", ")}</p>
             <p>• Target Timeline: {timeline}</p>
           </div>
@@ -564,9 +655,11 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
 
           {/* Service Selector Grid */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">1. Select Core Solutions required:</label>
+            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+              1. Select Core Solutions required:
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {availableServices.map(as => {
+              {availableServices.map((as) => {
                 const isSelected = selectedServices.includes(as.name);
                 const Icon = as.icon;
                 return (
@@ -580,13 +673,21 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                         : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400"
                     }`}
                   >
-                    <div className={`p-1.5 rounded-md mt-0.5 ${isSelected ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800"}`}>
+                    <div
+                      className={`p-1.5 rounded-md mt-0.5 ${isSelected ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800"}`}
+                    >
                       <Icon className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="block text-sm font-medium text-slate-900 dark:text-white">{as.name}</span>
+                      <span className="block text-sm font-medium text-slate-900 dark:text-white">
+                        {as.name}
+                      </span>
                       <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {as.id === "net" ? "Starts at $120 per node" : as.id === "maintenance" ? "Starts at $80 per device" : `Base cost: $${as.baseCost}`}
+                        {as.id === "net"
+                          ? "Starts at $120 per node"
+                          : as.id === "maintenance"
+                            ? "Starts at $80 per device"
+                            : `Base cost: $${as.baseCost}`}
                       </span>
                     </div>
                   </button>
@@ -596,7 +697,13 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
           </div>
 
           {/* Scaler Node count if network/computer selected */}
-          {selectedServices.some(s => s.includes("Node") || s.includes("Device") || s.includes("Maintenance") || s.includes("Cabling")) && (
+          {selectedServices.some(
+            (s) =>
+              s.includes("Node") ||
+              s.includes("Device") ||
+              s.includes("Maintenance") ||
+              s.includes("Cabling"),
+          ) && (
             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg space-y-2">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Number of workstations / network nodes to configure:
@@ -610,7 +717,9 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                   onChange={(e) => setQuantity(Number(e.target.value))}
                   className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="text-sm font-bold text-blue-600 dark:text-blue-400 w-10 text-right">{quantity}</span>
+                <span className="text-sm font-bold text-blue-600 dark:text-blue-400 w-10 text-right">
+                  {quantity}
+                </span>
               </div>
             </div>
           )}
@@ -618,7 +727,9 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
           {/* Timeline and Estimate summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-blue-50/40 dark:bg-blue-950/10 p-4 rounded-xl border border-blue-100/50 dark:border-blue-900/30">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Estimated Timeline</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Estimated Timeline
+              </label>
               <select
                 value={timeline}
                 onChange={(e) => setTimeline(e.target.value)}
@@ -630,25 +741,31 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
               </select>
             </div>
             <div className="text-right">
-              <span className="block text-xs text-slate-500 dark:text-slate-400">High-Level Base Estimate</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                High-Level Base Estimate
+              </span>
               <span className="text-2xl font-bold text-slate-900 dark:text-white flex items-center justify-end gap-0.5">
                 <DollarSign className="w-5 h-5 text-emerald-500 shrink-0" />
                 {calculateEstimate()}
               </span>
-              <span className="text-[10px] text-slate-400 dark:text-slate-500 block">Excludes specific hardware brand premium</span>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                Excludes specific hardware brand premium
+              </span>
             </div>
           </div>
 
           {/* Client Details Form */}
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">2. Request Formal Quotation from Syntax:</label>
+            <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+              2. Request Formal Quotation from Syntax:
+            </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 type="text"
                 required
                 placeholder="Your Name *"
                 value={clientInfo.name}
-                onChange={(e) => setClientInfo(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => setClientInfo((prev) => ({ ...prev, name: e.target.value }))}
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
@@ -656,7 +773,9 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                 required
                 placeholder="Company / Org Name *"
                 value={clientInfo.organization}
-                onChange={(e) => setClientInfo(prev => ({ ...prev, organization: e.target.value }))}
+                onChange={(e) =>
+                  setClientInfo((prev) => ({ ...prev, organization: e.target.value }))
+                }
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
@@ -664,7 +783,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                 required
                 placeholder="Business Email *"
                 value={clientInfo.email}
-                onChange={(e) => setClientInfo(prev => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => setClientInfo((prev) => ({ ...prev, email: e.target.value }))}
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
@@ -672,7 +791,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                 required
                 placeholder="Phone Number *"
                 value={clientInfo.phone}
-                onChange={(e) => setClientInfo(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => setClientInfo((prev) => ({ ...prev, phone: e.target.value }))}
                 className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -680,7 +799,7 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
               placeholder="Any specific brands or detailed structural specs (e.g. Suprema Biometrics, Cat6 STP Cabling, Hikvision CCTV locks)?"
               rows={2}
               value={clientInfo.details}
-              onChange={(e) => setClientInfo(prev => ({ ...prev, details: e.target.value }))}
+              onChange={(e) => setClientInfo((prev) => ({ ...prev, details: e.target.value }))}
               className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -702,8 +821,13 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
               >
                 <span className="text-xl shrink-0 mt-0.5">⚡</span>
                 <div>
-                  <span className="block text-xs font-bold text-slate-900 dark:text-white">Priority Audit (500 ETB)</span>
-                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Guaranteed 24hr site survey, stamped official quotation & custom SLA design blueprint.</span>
+                  <span className="block text-xs font-bold text-slate-900 dark:text-white">
+                    Priority Audit (500 ETB)
+                  </span>
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Guaranteed 24hr site survey, stamped official quotation & custom SLA design
+                    blueprint.
+                  </span>
                 </div>
               </button>
               <button
@@ -717,8 +841,13 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
               >
                 <span className="text-xl shrink-0 mt-0.5">📋</span>
                 <div>
-                  <span className="block text-xs font-bold text-slate-900 dark:text-white">Standard Estimate (Free)</span>
-                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Dispatched within 5-7 business days depending on engineering caseload. No physical survey.</span>
+                  <span className="block text-xs font-bold text-slate-900 dark:text-white">
+                    Standard Estimate (Free)
+                  </span>
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Dispatched within 5-7 business days depending on engineering caseload. No
+                    physical survey.
+                  </span>
                 </div>
               </button>
             </div>
@@ -747,7 +876,11 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   );
 };
 
-export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: string }> = ({ onSuccess, onClose, preselectedCourse = "" }) => {
+export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: string }> = ({
+  onSuccess,
+  onClose,
+  preselectedCourse = "",
+}) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
@@ -759,18 +892,20 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
     course: preselectedCourse || "CCTV Surveillance Design & Biometric Integration",
     trainingType: "Face-to-face training",
     experience: "Beginner (No technical background)",
-    goals: ""
+    goals: "",
   });
 
   const coursesList = [
     "CCTV Surveillance Design & Biometric Integration",
     "Enterprise Networking & Security Foundations",
-    "Office Technology & Business Automation"
+    "Office Technology & Business Automation",
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -784,8 +919,8 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "training",
-          data: formData
-        })
+          data: formData,
+        }),
       });
 
       const result = await response.json();
@@ -803,9 +938,17 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
   };
 
   return (
-    <div id="training-registration-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Course Enrollment & Registration</h3>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Enroll in Syntax Technology's practical skills academies to upskill yourself or your corporate team.</p>
+    <div
+      id="training-registration-container"
+      className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+    >
+      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">
+        Course Enrollment & Registration
+      </h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+        Enroll in Syntax Technology's practical skills academies to upskill yourself or your
+        corporate team.
+      </p>
 
       {success ? (
         <div className="text-center py-6 space-y-4">
@@ -813,15 +956,22 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
             <Check className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Registration Application Submitted!</h4>
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+              Registration Application Submitted!
+            </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-              Your registration is complete. A training representative will email your course itinerary, lab guidelines, and payment options for your enrollment.
+              Your registration is complete. A training representative will email your course
+              itinerary, lab guidelines, and payment options for your enrollment.
             </p>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-lg text-left text-xs max-w-sm mx-auto space-y-2">
-            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">Enrollment Specs:</p>
+            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">
+              Enrollment Specs:
+            </p>
             <p>• Student: {formData.name}</p>
-            <p>• Course: <span className="font-semibold">{formData.course}</span></p>
+            <p>
+              • Course: <span className="font-semibold">{formData.course}</span>
+            </p>
             <p>• Mode: {formData.trainingType}</p>
           </div>
           <div className="flex gap-2 justify-center pt-2">
@@ -836,7 +986,7 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
                   course: "CCTV Surveillance Design & Biometric Integration",
                   trainingType: "Face-to-face training",
                   experience: "Beginner (No technical background)",
-                  goals: ""
+                  goals: "",
                 });
               }}
               className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium rounded-lg transition"
@@ -864,7 +1014,9 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Full Name *
+              </label>
               <input
                 type="text"
                 name="name"
@@ -876,7 +1028,9 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Organization / Employer (Optional)</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Organization / Employer (Optional)
+              </label>
               <input
                 type="text"
                 name="organization"
@@ -890,7 +1044,9 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Email Address *
+              </label>
               <input
                 type="email"
                 name="email"
@@ -902,7 +1058,9 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Phone Number *
+              </label>
               <input
                 type="tel"
                 name="phone"
@@ -917,7 +1075,9 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Professional Course *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Select Professional Course *
+              </label>
               <select
                 name="course"
                 value={formData.course}
@@ -925,12 +1085,16 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {coursesList.map((c, i) => (
-                  <option key={i} value={c}>{c}</option>
+                  <option key={i} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Training Mode *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Training Mode *
+              </label>
               <select
                 name="trainingType"
                 value={formData.trainingType}
@@ -945,21 +1109,31 @@ export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Technical Background *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Current Technical Background *
+            </label>
             <select
               name="experience"
               value={formData.experience}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="Beginner (No technical background)">Beginner (No technical background)</option>
-              <option value="Intermediate (Some IT/hardware background)">Intermediate (Some IT/hardware background)</option>
-              <option value="Advanced (Current field engineer/networking technician)">Advanced (Current field engineer/networking technician)</option>
+              <option value="Beginner (No technical background)">
+                Beginner (No technical background)
+              </option>
+              <option value="Intermediate (Some IT/hardware background)">
+                Intermediate (Some IT/hardware background)
+              </option>
+              <option value="Advanced (Current field engineer/networking technician)">
+                Advanced (Current field engineer/networking technician)
+              </option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Participant Goals & Skills target *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Participant Goals & Skills target *
+            </label>
             <textarea
               name="goals"
               required
@@ -1005,12 +1179,14 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
     organization: "",
     subject: "",
     priority: "Medium",
-    details: ""
+    details: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1024,8 +1200,8 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "support",
-          data: formData
-        })
+          data: formData,
+        }),
       });
 
       const result = await response.json();
@@ -1036,21 +1212,31 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
         throw new Error(result.error || "Failed to submit support ticket");
       }
     } catch (err) {
-      setError(getErrorMessage(err, "Failed to log support incident. Please check server connections."));
+      setError(
+        getErrorMessage(err, "Failed to log support incident. Please check server connections."),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div id="support-wizard-container" className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+    <div
+      id="support-wizard-container"
+      className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm"
+    >
       <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center">
           <HelpCircle className="w-5 h-5" />
         </div>
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Syntax Technical Support SLA Helpdesk</h3>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+          Syntax Technical Support SLA Helpdesk
+        </h3>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Existing customer or SLA partner? File an instant support ticket below. Field crews dispatch according to priority schedules.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
+        Existing customer or SLA partner? File an instant support ticket below. Field crews dispatch
+        according to priority schedules.
+      </p>
 
       {success ? (
         <div className="text-center py-6 space-y-4">
@@ -1058,16 +1244,30 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
             <Check className="w-8 h-8" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-slate-900 dark:text-white">Technical Support Ticket Logged!</h4>
+            <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+              Technical Support Ticket Logged!
+            </h4>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
-              Your support incident is registered. Your ticket has been piped directly into the Syntax active dispatcher queue.
+              Your support incident is registered. Your ticket has been piped directly into the
+              Syntax active dispatcher queue.
             </p>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/30 p-4 rounded-lg text-left text-xs max-w-sm mx-auto space-y-2">
-            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">Ticket Details:</p>
+            <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">
+              Ticket Details:
+            </p>
             <p>• Contact: {formData.name}</p>
-            <p>• Issue: <span className="font-semibold">{formData.subject}</span></p>
-            <p>• Priority: <span className={`font-bold ${formData.priority === 'Urgent' ? 'text-red-500' : 'text-orange-500'}`}>{formData.priority}</span></p>
+            <p>
+              • Issue: <span className="font-semibold">{formData.subject}</span>
+            </p>
+            <p>
+              • Priority:{" "}
+              <span
+                className={`font-bold ${formData.priority === "Urgent" ? "text-red-500" : "text-orange-500"}`}
+              >
+                {formData.priority}
+              </span>
+            </p>
           </div>
           <div className="flex gap-2 justify-center pt-2">
             <button
@@ -1080,7 +1280,7 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
                   organization: "",
                   subject: "",
                   priority: "Medium",
-                  details: ""
+                  details: "",
                 });
               }}
               className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-medium rounded-lg transition"
@@ -1108,7 +1308,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Your Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Your Name *
+              </label>
               <input
                 type="text"
                 name="name"
@@ -1120,7 +1322,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Company / Org Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Company / Org Name *
+              </label>
               <input
                 type="text"
                 name="organization"
@@ -1135,7 +1339,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Email *
+              </label>
               <input
                 type="email"
                 name="email"
@@ -1147,7 +1353,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Direct Callback Phone *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Direct Callback Phone *
+              </label>
               <input
                 type="tel"
                 name="phone"
@@ -1162,7 +1370,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Symptom / Subject Line *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Symptom / Subject Line *
+              </label>
               <input
                 type="text"
                 name="subject"
@@ -1174,7 +1384,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Priority Severity *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                Priority Severity *
+              </label>
               <select
                 name="priority"
                 value={formData.priority}
@@ -1189,7 +1401,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Symptom Details & Hardware Diagnostics *</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+              Symptom Details & Hardware Diagnostics *
+            </label>
             <textarea
               name="details"
               required

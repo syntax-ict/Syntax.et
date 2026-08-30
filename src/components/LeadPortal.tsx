@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import type { Lead } from "../types";
-import { RefreshCw, Search, ShieldCheck, ChevronDown, ChevronUp, MessageSquare, Clock, Edit3 } from "lucide-react";
+import {
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Clock,
+  Edit3,
+} from "lucide-react";
 import { useLocalization } from "../context/useLocalization";
 
 interface LeadPortalProps {
@@ -15,7 +24,7 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
   const [selectedType, setSelectedType] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  
+
   // Status edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState<Lead["status"] | "">("");
@@ -49,13 +58,13 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: editStatus,
-          notes: editNotes
-        })
+          notes: editNotes,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         // Update local state
-        setLeads(prev => prev.map(l => l.id === id ? data.lead : l));
+        setLeads((prev) => prev.map((l) => (l.id === id ? data.lead : l)));
         setEditingId(null);
       }
     } catch (err) {
@@ -83,34 +92,45 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case "consultation": return "Consultation";
-      case "quote": return "Price Estimate";
-      case "training": return "Training Registration";
-      case "support": return "Support SLA Ticket";
-      default: return type;
+      case "consultation":
+        return "Consultation";
+      case "quote":
+        return "Price Estimate";
+      case "training":
+        return "Training Registration";
+      case "support":
+        return "Support SLA Ticket";
+      default:
+        return type;
     }
   };
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "consultation": return "bg-blue-100/75 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300";
-      case "quote": return "bg-emerald-100/75 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300";
-      case "training": return "bg-purple-100/75 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300";
-      case "support": return "bg-orange-100/75 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300";
-      default: return "bg-slate-100 text-slate-800";
+      case "consultation":
+        return "bg-blue-100/75 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300";
+      case "quote":
+        return "bg-emerald-100/75 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300";
+      case "training":
+        return "bg-purple-100/75 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300";
+      case "support":
+        return "bg-orange-100/75 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300";
+      default:
+        return "bg-slate-100 text-slate-800";
     }
   };
 
-  const filteredLeads = leads.filter(l => {
-    const matchesSearch = 
+  const filteredLeads = leads.filter((l) => {
+    const matchesSearch =
       l.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (l.data.name && l.data.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (l.data.organization && l.data.organization.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (l.data.organization &&
+        l.data.organization.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (l.data.details && l.data.details.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (l.data.subject && l.data.subject.toLowerCase().includes(searchQuery.toLowerCase()));
-    
+
     const matchesType = selectedType === "all" || l.type === selectedType;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -122,13 +142,13 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
           <div className="flex bg-slate-200 dark:bg-slate-700 rounded-lg p-0.5 text-xs font-semibold">
             <button
               onClick={() => setIsAdmin(false)}
-              className={`px-3 py-1.5 rounded-md transition ${!isAdmin ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm' : 'text-slate-600 dark:text-slate-400'}`}
+              className={`px-3 py-1.5 rounded-md transition ${!isAdmin ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white shadow-sm" : "text-slate-600 dark:text-slate-400"}`}
             >
               Client Ticket Tracker
             </button>
             <button
               onClick={() => setIsAdmin(true)}
-              className={`px-3 py-1.5 rounded-md transition flex items-center gap-1 ${isAdmin ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'}`}
+              className={`px-3 py-1.5 rounded-md transition flex items-center gap-1 ${isAdmin ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 dark:text-slate-400 hover:text-slate-900"}`}
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               Syntax Portal (Admin)
@@ -143,7 +163,7 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
             className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-300 transition shrink-0 flex items-center justify-center disabled:opacity-50"
             title="Refresh database records"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </button>
           <div className="relative w-full md:w-48">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -173,11 +193,15 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
       <div>
         {isAdmin ? (
           <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 rounded-lg text-xs text-blue-800 dark:text-blue-300">
-            <span className="font-bold">Administrative Access Enabled</span>: Change ticket statuses, write technical feasibility responses, or record site assessment notes. This simulates Syntax Technology's backend operations in lead qualification.
+            <span className="font-bold">Administrative Access Enabled</span>: Change ticket
+            statuses, write technical feasibility responses, or record site assessment notes. This
+            simulates Syntax Technology's backend operations in lead qualification.
           </div>
         ) : (
           <div className="p-3 bg-slate-50 dark:bg-slate-800/20 border border-slate-100 dark:border-slate-800/40 rounded-lg text-xs text-slate-600 dark:text-slate-400">
-            <span className="font-bold">Client Support Tracking</span>: Submitted forms register directly with our API. Monitor live status changes or consult advisor notes associated with your organization.
+            <span className="font-bold">Client Support Tracking</span>: Submitted forms register
+            directly with our API. Monitor live status changes or consult advisor notes associated
+            with your organization.
           </div>
         )}
       </div>
@@ -190,8 +214,13 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
         </div>
       ) : filteredLeads.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
-          <p className="text-sm text-slate-500 dark:text-slate-400">No active leads match the selected filter query.</p>
-          <p className="text-xs text-slate-400 mt-1">Submit a Consultation, Estimate, Training, or Support form to instantly populate this tracker!</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No active leads match the selected filter query.
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            Submit a Consultation, Estimate, Training, or Support form to instantly populate this
+            tracker!
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -210,7 +239,9 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                   className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cursor-pointer select-none"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getTypeColor(lead.type)}`}>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getTypeColor(lead.type)}`}
+                    >
                       {getTypeLabel(lead.type)}
                     </span>
                     <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
@@ -226,10 +257,16 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                       <Clock className="w-3.5 h-3.5" />
                       <span>{formatLocalizedDate(lead.createdAt)}</span>
                     </div>
-                    <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${getStatusStyle(lead.status)}`}>
+                    <span
+                      className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${getStatusStyle(lead.status)}`}
+                    >
                       {lead.status}
                     </span>
-                    {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />}
+                    {isExpanded ? (
+                      <ChevronUp className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
+                    )}
                   </div>
                 </div>
 
@@ -239,45 +276,113 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* General metadata */}
                       <div className="space-y-2">
-                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Contact Profile</p>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                          Contact Profile
+                        </p>
                         <div className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
-                          <p><span className="text-slate-400 font-medium">Name:</span> {lead.data.name}</p>
-                          <p><span className="text-slate-400 font-medium">Email:</span> {lead.data.email}</p>
-                          <p><span className="text-slate-400 font-medium">Phone:</span> {lead.data.phone}</p>
-                          {lead.data.organization && <p><span className="text-slate-400 font-medium">Organization:</span> {lead.data.organization}</p>}
+                          <p>
+                            <span className="text-slate-400 font-medium">Name:</span>{" "}
+                            {lead.data.name}
+                          </p>
+                          <p>
+                            <span className="text-slate-400 font-medium">Email:</span>{" "}
+                            {lead.data.email}
+                          </p>
+                          <p>
+                            <span className="text-slate-400 font-medium">Phone:</span>{" "}
+                            {lead.data.phone}
+                          </p>
+                          {lead.data.organization && (
+                            <p>
+                              <span className="text-slate-400 font-medium">Organization:</span>{" "}
+                              {lead.data.organization}
+                            </p>
+                          )}
                         </div>
                       </div>
 
                       {/* Channel-specific metadata */}
                       <div className="space-y-2">
-                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Inquiry Parameters</p>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                          Inquiry Parameters
+                        </p>
                         <div className="bg-white dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
                           {lead.type === "consultation" && (
                             <>
-                              <p><span className="text-slate-400 font-medium">Problem Area:</span> {lead.data.problemArea}</p>
-                              <p><span className="text-slate-400 font-medium">Project Urgency:</span> {lead.data.urgency}</p>
-                              <p><span className="text-slate-400 font-medium">Target Budget:</span> {lead.data.budget}</p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Problem Area:</span>{" "}
+                                {lead.data.problemArea}
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Project Urgency:</span>{" "}
+                                {lead.data.urgency}
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Target Budget:</span>{" "}
+                                {lead.data.budget}
+                              </p>
                             </>
                           )}
                           {lead.type === "quote" && (
                             <>
-                              <p><span className="text-slate-400 font-medium">Required Core:</span> {lead.data.selectedServices ? lead.data.selectedServices.join(", ") : "Not selected"}</p>
-                              {(lead.data.quantity ?? 0) > 1 && <p><span className="text-slate-400 font-medium">Nodes/Workstations:</span> {lead.data.quantity}</p>}
-                              <p><span className="text-slate-400 font-medium">Estimated cost base:</span> <span className="font-bold text-emerald-600">{lead.data.estimatedBaseCost}</span></p>
-                              <p><span className="text-slate-400 font-medium">Timeline:</span> {lead.data.timeline}</p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Required Core:</span>{" "}
+                                {lead.data.selectedServices
+                                  ? lead.data.selectedServices.join(", ")
+                                  : "Not selected"}
+                              </p>
+                              {(lead.data.quantity ?? 0) > 1 && (
+                                <p>
+                                  <span className="text-slate-400 font-medium">
+                                    Nodes/Workstations:
+                                  </span>{" "}
+                                  {lead.data.quantity}
+                                </p>
+                              )}
+                              <p>
+                                <span className="text-slate-400 font-medium">
+                                  Estimated cost base:
+                                </span>{" "}
+                                <span className="font-bold text-emerald-600">
+                                  {lead.data.estimatedBaseCost}
+                                </span>
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Timeline:</span>{" "}
+                                {lead.data.timeline}
+                              </p>
                             </>
                           )}
                           {lead.type === "training" && (
                             <>
-                              <p><span className="text-slate-400 font-medium">Target Course:</span> {lead.data.course}</p>
-                              <p><span className="text-slate-400 font-medium">Training Mode:</span> {lead.data.trainingType}</p>
-                              <p><span className="text-slate-400 font-medium">Student Level:</span> {lead.data.experience}</p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Target Course:</span>{" "}
+                                {lead.data.course}
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Training Mode:</span>{" "}
+                                {lead.data.trainingType}
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Student Level:</span>{" "}
+                                {lead.data.experience}
+                              </p>
                             </>
                           )}
                           {lead.type === "support" && (
                             <>
-                              <p><span className="text-slate-400 font-medium">Support Subject:</span> {lead.data.subject}</p>
-                              <p><span className="text-slate-400 font-medium">Priority Severity:</span> <span className="font-semibold text-red-500">{lead.data.priority}</span></p>
+                              <p>
+                                <span className="text-slate-400 font-medium">Support Subject:</span>{" "}
+                                {lead.data.subject}
+                              </p>
+                              <p>
+                                <span className="text-slate-400 font-medium">
+                                  Priority Severity:
+                                </span>{" "}
+                                <span className="font-semibold text-red-500">
+                                  {lead.data.priority}
+                                </span>
+                              </p>
                             </>
                           )}
                         </div>
@@ -286,9 +391,13 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
 
                     {/* Requirements / Details text box */}
                     <div className="space-y-1.5">
-                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Client Requirement Details</p>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                        Client Requirement Details
+                      </p>
                       <div className="bg-white dark:bg-slate-950 p-3.5 rounded-lg border border-slate-100 dark:border-slate-800 text-xs leading-relaxed">
-                        {lead.data.details || lead.data.goals || "No detailed requirements provided."}
+                        {lead.data.details ||
+                          lead.data.goals ||
+                          "No detailed requirements provided."}
                       </div>
                     </div>
 
@@ -318,7 +427,9 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                         <div className="bg-blue-50/30 dark:bg-blue-950/10 p-3 rounded-lg border border-blue-100/50 dark:border-blue-900/30 space-y-3">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Update Status</label>
+                              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                Update Status
+                              </label>
                               <select
                                 value={editStatus}
                                 onChange={(e) => setEditStatus(e.target.value as Lead["status"])}
@@ -333,7 +444,9 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Technical Consultation / Site Assessment Notes</label>
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                              Technical Consultation / Site Assessment Notes
+                            </label>
                             <textarea
                               rows={3}
                               value={editNotes}
@@ -356,7 +469,11 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                               disabled={saveLoading}
                               className="px-3 py-1 bg-blue-600 text-white rounded-md font-semibold flex items-center gap-1"
                             >
-                              {saveLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Save Changes"}
+                              {saveLoading ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                "Save Changes"
+                              )}
                             </button>
                           </div>
                         </div>
@@ -368,12 +485,17 @@ export const LeadPortal: React.FC<LeadPortalProps> = ({ onTriggerRefresh }) => {
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                 Technical Advisor Notes:
                               </div>
-                              <p className="italic text-slate-800 dark:text-slate-200">{lead.notes}</p>
+                              <p className="italic text-slate-800 dark:text-slate-200">
+                                {lead.notes}
+                              </p>
                             </div>
                           ) : (
                             <div className="text-slate-400 flex items-center gap-1.5">
                               <Clock className="w-3.5 h-3.5 shrink-0" />
-                              <span>This ticket is currently in queue. A Syntax engineer has been assigned and will update with site-assessment plans.</span>
+                              <span>
+                                This ticket is currently in queue. A Syntax engineer has been
+                                assigned and will update with site-assessment plans.
+                              </span>
                             </div>
                           )}
                         </div>

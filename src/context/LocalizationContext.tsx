@@ -4,7 +4,7 @@ import {
   DICTIONARIES,
   formatCurrency as formatCurr,
   formatNumber as formatNum,
-  formatLocalizedDate as formatDate
+  formatLocalizedDate as formatDate,
 } from "../lib/localization";
 import { LocalizationContext } from "./localization-context";
 
@@ -59,7 +59,8 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // regional dictionary is missing the key, and finally to the key path itself.
   const t = (path: string, variables?: Record<string, string | number>): string => {
     const parts = path.split(".");
-    const translated = resolvePath(DICTIONARY_TREE[language], parts) ?? resolvePath(DICTIONARY_TREE.en, parts);
+    const translated =
+      resolvePath(DICTIONARY_TREE[language], parts) ?? resolvePath(DICTIONARY_TREE.en, parts);
 
     if (translated === undefined) {
       return path;
@@ -72,7 +73,7 @@ export const LocalizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Replace variables in format {variable_name}
     return Object.entries(variables).reduce(
       (acc, [key, val]) => acc.replace(new RegExp(`{${key}}`, "g"), String(val)),
-      translated
+      translated,
     );
   };
 

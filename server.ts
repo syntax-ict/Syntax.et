@@ -35,11 +35,13 @@ const leads: Lead[] = [
       organization: "National Procurement Agency",
       phone: "+250 788 123 456",
       problemArea: "Attendance Management & Security",
-      details: "Need a biometric clock-in system integrated with our security gates to solve accurate staff attendance tracking.",
+      details:
+        "Need a biometric clock-in system integrated with our security gates to solve accurate staff attendance tracking.",
       urgency: "High",
-      budget: "$5,000 - $10,000"
+      budget: "$5,000 - $10,000",
     },
-    notes: "Completed physical site assessment. Recommended Suprema Biometric terminals. Sent formal proposal."
+    notes:
+      "Completed physical site assessment. Recommended Suprema Biometric terminals. Sent formal proposal.",
   },
   {
     id: "LT-8911",
@@ -53,10 +55,11 @@ const leads: Lead[] = [
       phone: "+256 701 987 654",
       servicePillar: "Technology Solutions",
       items: ["Networking infrastructure", "System integration", "Technical support"],
-      details: "Moving to a new office block. Need structured cabling, high-speed networking setup, and monthly IT maintenance support for 25 workstations.",
-      timeline: "Within 30 days"
+      details:
+        "Moving to a new office block. Need structured cabling, high-speed networking setup, and monthly IT maintenance support for 25 workstations.",
+      timeline: "Within 30 days",
     },
-    notes: "Initial call done. Tech lead scheduled network blueprint design for Monday morning."
+    notes: "Initial call done. Tech lead scheduled network blueprint design for Monday morning.",
   },
   {
     id: "LT-8912",
@@ -71,8 +74,9 @@ const leads: Lead[] = [
       course: "Corporate Digital Security & Biometric Integration",
       trainingType: "Online training",
       experience: "Intermediate (IT background)",
-      goals: "Looking to gain skills in setting up modern enterprise IP camera systems and CCTV networking for my career advancement."
-    }
+      goals:
+        "Looking to gain skills in setting up modern enterprise IP camera systems and CCTV networking for my career advancement.",
+    },
   },
   {
     id: "LT-8913",
@@ -86,9 +90,10 @@ const leads: Lead[] = [
       phone: "+27 11 400 9000",
       subject: "CCTV Stream Offline on Channel 4 & 5",
       priority: "Urgent",
-      details: "Cameras on the main entrance and back dock show blank black screens. Tried rebooting the NVR switch, but no response. Require immediate technical support."
-    }
-  }
+      details:
+        "Cameras on the main entrance and back dock show blank black screens. Tried rebooting the NVR switch, but no response. Require immediate technical support.",
+    },
+  },
 ];
 
 // Health probe for container orchestrators and uptime monitoring
@@ -97,7 +102,7 @@ app.get("/api/health", (_req, res) => {
     status: "ok",
     uptime: process.uptime(),
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -109,7 +114,9 @@ app.get("/api/leads", (_req, res) => {
 app.post("/api/leads", (req, res) => {
   const { type, data } = req.body;
   if (!type || !data) {
-    return res.status(400).json({ success: false, error: "Missing required fields: type and data" });
+    return res
+      .status(400)
+      .json({ success: false, error: "Missing required fields: type and data" });
   }
 
   const newId = `LT-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -118,7 +125,7 @@ app.post("/api/leads", (req, res) => {
     type,
     status: "Pending Review",
     createdAt: new Date().toISOString(),
-    data
+    data,
   };
 
   leads.unshift(newLead);
@@ -150,7 +157,15 @@ interface Transaction {
   name: string;
   description: string;
   provider: string;
-  status: "PENDING" | "INITIATED" | "PROCESSING" | "PAID" | "FAILED" | "CANCELLED" | "REFUNDED" | "PARTIALLY_REFUNDED";
+  status:
+    | "PENDING"
+    | "INITIATED"
+    | "PROCESSING"
+    | "PAID"
+    | "FAILED"
+    | "CANCELLED"
+    | "REFUNDED"
+    | "PARTIALLY_REFUNDED";
   createdAt: string;
 }
 
@@ -160,7 +175,9 @@ app.post("/api/payments/initialize", (req, res) => {
   const { txRef, amount, currency, email, phone, name, description, provider } = req.body;
 
   if (!txRef || !amount || !currency || !email || !name || !provider) {
-    return res.status(400).json({ success: false, error: "Missing required parameters for payment initialization" });
+    return res
+      .status(400)
+      .json({ success: false, error: "Missing required parameters for payment initialization" });
   }
 
   // Create authoritative server-side record
@@ -174,7 +191,7 @@ app.post("/api/payments/initialize", (req, res) => {
     description: description || "Syntax Technology Invoice",
     provider,
     status: "INITIATED",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
   };
 
   transactions.push(transaction);
@@ -187,7 +204,7 @@ app.post("/api/payments/initialize", (req, res) => {
     txRef,
     status: "INITIATED",
     checkoutUrl,
-    message: "Payment successfully initiated on authoritative server"
+    message: "Payment successfully initiated on authoritative server",
   });
 });
 
@@ -213,7 +230,7 @@ app.get("/api/payments/verify/:txRef", (req, res) => {
     email: transaction.email,
     provider: transaction.provider,
     description: transaction.description,
-    createdAt: transaction.createdAt
+    createdAt: transaction.createdAt,
   });
 });
 
@@ -246,7 +263,7 @@ app.post("/api/assistant", async (req, res) => {
 
   try {
     const ai = getGeminiClient();
-    
+
     // Construct conversation with system guidelines
     const systemInstruction = `You are the Syntax AI Business Consultant, a sophisticated, professional advisor representing Syntax Technology. 
 Your objective is to consult visitors, understand their organizational or individual needs, and guide them towards the appropriate solution in one of our 4 business pillars:
@@ -269,7 +286,9 @@ YOUR TONE & CONSTRAINTS:
 
     // Map conversation array to content parts format expected by modern @google/genai SDK
     // Simple prompt representation with context for simplicity
-    const promptContext = messages.map(msg => `${msg.role === 'user' ? 'Client' : 'Syntax Advisor'}: ${msg.content}`).join("\n");
+    const promptContext = messages
+      .map((msg) => `${msg.role === "user" ? "Client" : "Syntax Advisor"}: ${msg.content}`)
+      .join("\n");
     const fullPrompt = `${promptContext}\n\nSyntax Advisor:`;
 
     const result = await ai.models.generateContent({
@@ -278,17 +297,20 @@ YOUR TONE & CONSTRAINTS:
       config: {
         systemInstruction,
         temperature: 0.7,
-      }
+      },
     });
 
-    const responseText = result.text || "I apologize, but I am unable to process your request at this moment. Please feel free to initiate a custom Consultation Request using our forms.";
+    const responseText =
+      result.text ||
+      "I apologize, but I am unable to process your request at this moment. Please feel free to initiate a custom Consultation Request using our forms.";
     res.json({ success: true, text: responseText });
   } catch (error) {
     console.error("Gemini API Error in /api/assistant:", error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Unable to connect to Syntax AI. Please try again or complete a direct Consultation Request.",
-      details: error instanceof Error ? error.message : String(error)
+    res.status(500).json({
+      success: false,
+      error:
+        "Unable to connect to Syntax AI. Please try again or complete a direct Consultation Request.",
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 });
@@ -310,7 +332,9 @@ async function startServer() {
   }
 
   app.listen(PORT, HOST, () => {
-    console.log(`Server running on http://localhost:${PORT} (${process.env.NODE_ENV ?? "development"})`);
+    console.log(
+      `Server running on http://localhost:${PORT} (${process.env.NODE_ENV ?? "development"})`,
+    );
   });
 }
 

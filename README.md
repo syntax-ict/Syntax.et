@@ -61,31 +61,31 @@ visitors at the consultation forms.
 
 ## Available scripts
 
-| Script                  | Purpose                                                            |
-| ----------------------- | ------------------------------------------------------------------ |
-| `npm run dev`           | Express + Vite dev server with HMR, restarting on server changes    |
-| `npm run build`         | Build the client bundle and the bundled server (`dist/`)            |
-| `npm start`             | Run the production build (`NODE_ENV=production node dist/server.cjs`) |
-| `npm run typecheck`     | `tsc --build` across both TypeScript projects                      |
-| `npm run lint`          | ESLint, failing on any warning                                     |
-| `npm run lint:fix`      | ESLint with autofix                                                |
-| `npm run format`        | Prettier write                                                     |
-| `npm run format:check`  | Prettier check (used in CI)                                        |
-| `npm run check`         | Typecheck + lint + format check — run this before pushing          |
-| `npm run clean`         | Remove `dist/` and TypeScript build info                           |
+| Script                 | Purpose                                                               |
+| ---------------------- | --------------------------------------------------------------------- |
+| `npm run dev`          | Express + Vite dev server with HMR, restarting on server changes      |
+| `npm run build`        | Build the client bundle and the bundled server (`dist/`)              |
+| `npm start`            | Run the production build (`NODE_ENV=production node dist/server.cjs`) |
+| `npm run typecheck`    | `tsc --build` across both TypeScript projects                         |
+| `npm run lint`         | ESLint, failing on any warning                                        |
+| `npm run lint:fix`     | ESLint with autofix                                                   |
+| `npm run format`       | Prettier write                                                        |
+| `npm run format:check` | Prettier check (used in CI)                                           |
+| `npm run check`        | Typecheck + lint + format check — run this before pushing             |
+| `npm run clean`        | Remove `dist/` and TypeScript build info                              |
 
 ## Environment variables
 
 All variables are optional except where noted. See [`.env.example`](.env.example).
 
-| Variable         | Required | Default                 | Description                                             |
-| ---------------- | -------- | ----------------------- | ------------------------------------------------------- |
-| `GEMINI_API_KEY` | For AI   | —                       | Google Gemini key used by `POST /api/assistant`          |
-| `APP_URL`        | No       | `http://localhost:3000` | Public URL, for self-referential links                   |
-| `PORT`           | No       | `3000`                  | HTTP port                                                |
-| `HOST`           | No       | `0.0.0.0`               | Bind address                                             |
-| `NODE_ENV`       | No       | `development`           | `production` serves `dist/` statically instead of Vite   |
-| `DISABLE_HMR`    | No       | `false`                 | `true` disables Vite HMR and file watching               |
+| Variable         | Required | Default                 | Description                                            |
+| ---------------- | -------- | ----------------------- | ------------------------------------------------------ |
+| `GEMINI_API_KEY` | For AI   | —                       | Google Gemini key used by `POST /api/assistant`        |
+| `APP_URL`        | No       | `http://localhost:3000` | Public URL, for self-referential links                 |
+| `PORT`           | No       | `3000`                  | HTTP port                                              |
+| `HOST`           | No       | `0.0.0.0`               | Bind address                                           |
+| `NODE_ENV`       | No       | `development`           | `production` serves `dist/` statically instead of Vite |
+| `DISABLE_HMR`    | No       | `false`                 | `true` disables Vite HMR and file watching             |
 
 `.env` is git-ignored. Never commit real keys.
 
@@ -124,15 +124,15 @@ The `@` path alias resolves to `src/` in both Vite and TypeScript.
 
 All routes are served by `server.ts` under `/api`.
 
-| Method  | Route                        | Description                                      |
-| ------- | ---------------------------- | ------------------------------------------------ |
-| `GET`   | `/api/health`                | Liveness probe, uptime, and Gemini configuration |
-| `GET`   | `/api/leads`                 | List all leads and support tickets               |
-| `POST`  | `/api/leads`                 | Create a lead (`{ type, data }`)                 |
-| `PATCH` | `/api/leads/:id`             | Update a lead's `status` and/or `notes`          |
-| `POST`  | `/api/payments/initialize`   | Open a transaction, returns a checkout URL       |
-| `GET`   | `/api/payments/verify/:txRef`| Server-side authoritative status check           |
-| `POST`  | `/api/assistant`             | Gemini-backed consultant (`{ messages }`)        |
+| Method  | Route                         | Description                                      |
+| ------- | ----------------------------- | ------------------------------------------------ |
+| `GET`   | `/api/health`                 | Liveness probe, uptime, and Gemini configuration |
+| `GET`   | `/api/leads`                  | List all leads and support tickets               |
+| `POST`  | `/api/leads`                  | Create a lead (`{ type, data }`)                 |
+| `PATCH` | `/api/leads/:id`              | Update a lead's `status` and/or `notes`          |
+| `POST`  | `/api/payments/initialize`    | Open a transaction, returns a checkout URL       |
+| `GET`   | `/api/payments/verify/:txRef` | Server-side authoritative status check           |
+| `POST`  | `/api/assistant`              | Gemini-backed consultant (`{ messages }`)        |
 
 ## Localization
 
