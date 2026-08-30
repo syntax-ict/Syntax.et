@@ -124,6 +124,31 @@ export const listProjects = () => apiRequest<Project[]>("/api/projects");
 export const getProject = (slug: string) =>
   apiRequest<Project>(`/api/projects/${encodeURIComponent(slug)}`);
 
+const COURSE_LEVEL_LABELS: Record<Course["level"], string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+  all_levels: "All Levels",
+};
+
+/** "all_levels" -> "All Levels", for display and for the level filter's values. */
+export const formatCourseLevel = (value: Course["level"]): string =>
+  COURSE_LEVEL_LABELS[value] ?? value;
+
+const COURSE_MODE_LABELS: Record<Course["mode"], string> = {
+  online: "Online training",
+  face_to_face: "Face-to-face training",
+  corporate: "Corporate training",
+};
+
+/** "face_to_face" -> "Face-to-face training", for display and delivery badges. */
+export const formatCourseMode = (value: Course["mode"]): string =>
+  COURSE_MODE_LABELS[value] ?? value;
+
+/** {amount:"350.00",currency:"ETB"} -> "ETB 350.00"; null amount -> fallback. */
+export const formatCoursePrice = (price: CoursePrice, fallback = "Custom Quote"): string =>
+  price.amount ? `${price.currency} ${price.amount}` : fallback;
+
 const CLIENT_TYPE_LABELS: Record<Project["client_type"], string> = {
   government: "Government",
   private_enterprise: "Private Enterprise",
