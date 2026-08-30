@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../lib/apiClient";
 
 export type FetchState<T> =
-  | { status: "loading" }
-  | { status: "success"; data: T }
-  | { status: "error"; error: ApiError };
+  { status: "loading" } | { status: "success"; data: T } | { status: "error"; error: ApiError };
 
 /**
  * Runs `fetcher` on mount (and whenever `deps` changes), tracking

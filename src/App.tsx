@@ -1,26 +1,8 @@
 import { useState } from "react";
 import {
-  Cpu,
-  Shield,
-  BookOpen,
-  Briefcase,
-  Network,
-  Combine,
-  Code2,
-  Wrench,
-  Camera,
-  Fingerprint,
-  MapPin,
-  Layers,
-  Timer,
   Users,
-  GraduationCap,
-  Printer,
-  Megaphone,
-  Laptop,
   ArrowRight,
   Sparkles,
-  HelpCircle,
   Phone,
   Mail,
   Award,
@@ -34,7 +16,6 @@ import {
   HardDrive,
   Smartphone,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import {
   listSolutionCategories,
   listCustomerProblems,
@@ -43,6 +24,7 @@ import {
 } from "./lib/content";
 import { useFetch } from "./hooks/useFetch";
 import { Header } from "./components/Header";
+import { IconResolver } from "./components/IconResolver";
 import { AIAssistant } from "./components/AIAssistant";
 import { LeadPortal } from "./components/LeadPortal";
 import { InteractiveHelp } from "./components/InteractiveHelp";
@@ -55,33 +37,6 @@ import {
 import { SolutionsHub } from "./components/SolutionsHub";
 import { TrainingAcademy } from "./components/TrainingAcademy";
 import { ProjectPortfolio } from "./components/ProjectPortfolio";
-
-// Helper component to render dynamic icons safely
-const IconResolver = ({ name, className = "w-5 h-5" }: { name: string; className?: string }) => {
-  const icons: Record<string, LucideIcon> = {
-    Cpu,
-    Shield,
-    BookOpen,
-    Briefcase,
-    Network,
-    Combine,
-    Code2,
-    Wrench,
-    Camera,
-    Fingerprint,
-    MapPin,
-    Layers,
-    Timer,
-    Users,
-    GraduationCap,
-    Printer,
-    Megaphone,
-    Laptop,
-    HelpCircle,
-  };
-  const IconComponent = icons[name] || HelpCircle;
-  return <IconComponent className={className} />;
-};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("solutions");

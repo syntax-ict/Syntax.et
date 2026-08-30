@@ -8,11 +8,7 @@ import { apiRequest } from "./apiClient";
 
 export type InquiryType = "consultation" | "quote" | "support";
 export type InquiryStatus =
-  | "pending_review"
-  | "in_contact"
-  | "in_progress"
-  | "resolved"
-  | "completed";
+  "pending_review" | "in_contact" | "in_progress" | "resolved" | "completed";
 
 export interface InquirySummary {
   reference: string;
