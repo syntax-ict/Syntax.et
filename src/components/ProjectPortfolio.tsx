@@ -13,7 +13,8 @@ import {
   Moon,
   Database,
 } from "lucide-react";
-import { PORTFOLIO_PROJECTS } from "../data";
+import { listProjects, formatClientType } from "../lib/content";
+import { useFetch } from "../hooks/useFetch";
 import { useLocalization } from "../context/useLocalization";
 
 // Dynamic schematic components for custom interactive diagrams
@@ -297,35 +298,44 @@ interface ProjectPortfolioProps {
 }
 
 export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchConsultation }) => {
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedProjectSlug, setSelectedProjectSlug] = useState<string | null>(null);
   const { t } = useLocalization();
+
+  const projectsState = useFetch(listProjects, []);
 
   // Filtering States
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedSector, setSelectedSector] = useState<string>("All");
 
-  // Fetch unique categories & sectors for drop-downs / selectors
-  const categories = [
-    "All",
-    "Security & Intelligent Systems",
-    "Enterprise IT Infrastructure",
-    "Business Technology & Automation",
-  ];
-  const sectors = ["All", "Government", "Private Enterprise", "Retail Hub"];
+  // Category options are derived from whatever categories the fetched
+  // projects actually belong to, rather than a hand-maintained list — the
+  // backend is the source of truth for category names.
+  const categories = useMemo(() => {
+    if (projectsState.status !== "success") return ["All"];
+    const names = new Set<string>();
+    for (const proj of projectsState.data) {
+      if (proj.category?.name) names.add(proj.category.name);
+    }
+    return ["All", ...names];
+  }, [projectsState]);
+  const sectors = ["All", "Government", "Private Enterprise", "Retail Hub", "Corporate Office"];
 
   // Filtered Projects
   const filteredProjects = useMemo(() => {
-    return PORTFOLIO_PROJECTS.filter((proj) => {
-      const matchCat = selectedCategory === "All" || proj.category === selectedCategory;
-      const matchSec = selectedSector === "All" || proj.clientType === selectedSector;
+    if (projectsState.status !== "success") return [];
+    return projectsState.data.filter((proj) => {
+      const matchCat = selectedCategory === "All" || proj.category?.name === selectedCategory;
+      const matchSec =
+        selectedSector === "All" || formatClientType(proj.client_type) === selectedSector;
       return matchCat && matchSec;
     });
-  }, [selectedCategory, selectedSector]);
+  }, [projectsState, selectedCategory, selectedSector]);
 
   // Selected Project Object
   const selectedProject = useMemo(() => {
-    return PORTFOLIO_PROJECTS.find((p) => p.id === selectedProjectId) || null;
-  }, [selectedProjectId]);
+    if (projectsState.status !== "success") return null;
+    return projectsState.data.find((p) => p.slug === selectedProjectSlug) || null;
+  }, [projectsState, selectedProjectSlug]);
 
   // Direct reset helper
   const handleResetFilters = () => {
@@ -361,169 +371,196 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
               </p>
             </div>
 
-            {/* Filter Hub Toolbar */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-50 dark:border-slate-800/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Discovery Filter Engine
-                  </span>
-                </div>
-                <button
-                  onClick={handleResetFilters}
-                  className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Clear All Filters
-                </button>
+            {projectsState.status === "loading" && (
+              <div className="py-16 text-center text-xs text-slate-400 animate-pulse">
+                Loading verified deployments…
               </div>
+            )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Category Filtering Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
-                    <Tag className="w-3 h-3" />
-                    Filter by Business Pillar:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-                          selectedCategory === cat
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850"
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sector Filtering Dropdown */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
-                    <Briefcase className="w-3 h-3" />
-                    Filter by Client Sector:
-                  </label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sectors.map((sec) => (
-                      <button
-                        key={sec}
-                        onClick={() => setSelectedSector(sec)}
-                        className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
-                          selectedSector === sec
-                            ? "bg-slate-900 text-white dark:bg-slate-800"
-                            : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850"
-                        }`}
-                      >
-                        {sec}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {projectsState.status === "error" && (
+              <div className="p-6 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-center space-y-1">
+                <p className="text-xs font-bold text-red-600 dark:text-red-400">
+                  Couldn't load our project portfolio.
+                </p>
+                <p className="text-[11px] text-red-500/80 dark:text-red-400/70">
+                  {projectsState.error.message}
+                </p>
               </div>
+            )}
 
-              {/* Filtering summary stats */}
-              <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                <span>
-                  Showing {filteredProjects.length} of {PORTFOLIO_PROJECTS.length} verified
-                  deployments
-                </span>
-                {(selectedCategory !== "All" || selectedSector !== "All") && (
-                  <span className="text-blue-500 font-bold">
-                    Active Filters:{" "}
-                    {selectedCategory !== "All" ? `[Pillar: ${selectedCategory}]` : ""}{" "}
-                    {selectedSector !== "All" ? `[Sector: ${selectedSector}]` : ""}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Project Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {filteredProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between hover:shadow-lg hover:border-blue-100 dark:hover:border-blue-900/40 transition group"
-                >
-                  <div className="space-y-4">
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100/30 dark:border-blue-900/30">
-                        {project.category}
-                      </span>
-                      <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                        {project.clientType} Sector
+            {projectsState.status === "success" && (
+              <>
+                {/* Filter Hub Toolbar */}
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-50 dark:border-slate-800/60 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-blue-500" />
+                      <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wide">
+                        Discovery Filter Engine
                       </span>
                     </div>
+                    <button
+                      onClick={handleResetFilters}
+                      className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
 
-                    <div className="space-y-1">
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {project.title}
-                      </h3>
-                      <p className="text-[11px] text-slate-400 font-mono font-semibold">
-                        Industry: {project.industry || "General ICT Infrastructure"}
-                      </p>
-                    </div>
-
-                    <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed line-clamp-3">
-                      {project.description}
-                    </p>
-
-                    {/* Quick highlights / deliverables */}
-                    <div className="space-y-1.5 pt-2 border-t border-slate-50 dark:border-slate-800/50">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Key Deliverable Highlights:
-                      </span>
-                      <ul className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-                        {project.deliverables.slice(0, 2).map((del, i) => (
-                          <li key={i} className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                            <span className="truncate">{del}</span>
-                          </li>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Category Filtering Dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                        <Tag className="w-3 h-3" />
+                        Filter by Business Pillar:
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {categories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                              selectedCategory === cat
+                                ? "bg-blue-600 text-white"
+                                : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850"
+                            }`}
+                          >
+                            {cat}
+                          </button>
                         ))}
-                      </ul>
+                      </div>
                     </div>
 
-                    {/* Outcome Box */}
-                    <div className="bg-emerald-50/20 dark:bg-emerald-950/10 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-3">
-                      <span className="text-[8px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block font-mono mb-1">
-                        Audited Result
-                      </span>
-                      <p className="text-[11px] text-slate-800 dark:text-slate-300 font-bold leading-tight">
-                        ✓ {project.results[0]}
-                      </p>
+                    {/* Sector Filtering Dropdown */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide flex items-center gap-1">
+                        <Briefcase className="w-3 h-3" />
+                        Filter by Client Sector:
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sectors.map((sec) => (
+                          <button
+                            key={sec}
+                            onClick={() => setSelectedSector(sec)}
+                            className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                              selectedSector === sec
+                                ? "bg-slate-900 text-white dark:bg-slate-800"
+                                : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850"
+                            }`}
+                          >
+                            {sec}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => setSelectedProjectId(project.id)}
-                    className="w-full mt-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-750 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2"
-                  >
-                    <span>Read Full Case Study</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Filtering summary stats */}
+                  <div className="pt-2 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                    <span>
+                      Showing {filteredProjects.length} of {projectsState.data.length} verified
+                      deployments
+                    </span>
+                    {(selectedCategory !== "All" || selectedSector !== "All") && (
+                      <span className="text-blue-500 font-bold">
+                        Active Filters:{" "}
+                        {selectedCategory !== "All" ? `[Pillar: ${selectedCategory}]` : ""}{" "}
+                        {selectedSector !== "All" ? `[Sector: ${selectedSector}]` : ""}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              ))}
 
-              {filteredProjects.length === 0 && (
-                <div className="col-span-full py-16 text-center space-y-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-                  <Layers className="w-10 h-10 text-slate-400 mx-auto opacity-60" />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    No verified deployment match these active filter settings.
-                  </p>
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline"
-                  >
-                    Reset Filter Fields
-                  </button>
+                {/* Project Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {filteredProjects.map((project) => (
+                    <div
+                      key={project.slug}
+                      className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between hover:shadow-lg hover:border-blue-100 dark:hover:border-blue-900/40 transition group"
+                    >
+                      <div className="space-y-4">
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {project.category && (
+                            <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400 border border-blue-100/30 dark:border-blue-900/30">
+                              {project.category.name}
+                            </span>
+                          )}
+                          <span className="text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                            {formatClientType(project.client_type)} Sector
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {project.title}
+                          </h3>
+                          <p className="text-[11px] text-slate-400 font-mono font-semibold">
+                            Industry: {project.industry || "General ICT Infrastructure"}
+                          </p>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed line-clamp-3">
+                          {project.description}
+                        </p>
+
+                        {/* Quick highlights / deliverables */}
+                        <div className="space-y-1.5 pt-2 border-t border-slate-50 dark:border-slate-800/50">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Key Deliverable Highlights:
+                          </span>
+                          <ul className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            {project.deliverables.slice(0, 2).map((del, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                <span className="truncate">{del}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Outcome Box */}
+                        <div className="bg-emerald-50/20 dark:bg-emerald-950/10 border border-emerald-100/30 dark:border-emerald-900/20 rounded-xl p-3">
+                          <span className="text-[8px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest block font-mono mb-1">
+                            Audited Result
+                          </span>
+                          <p className="text-[11px] text-slate-800 dark:text-slate-300 font-bold leading-tight">
+                            ✓ {project.results[0]}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setSelectedProjectSlug(project.slug)}
+                        className="w-full mt-6 py-2.5 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-750 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition flex items-center justify-center gap-2"
+                      >
+                        <span>Read Full Case Study</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {filteredProjects.length === 0 && (
+                    <div className="col-span-full py-16 text-center space-y-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                      <Layers className="w-10 h-10 text-slate-400 mx-auto opacity-60" />
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                        {projectsState.data.length === 0
+                          ? "No verified deployments are published yet."
+                          : "No verified deployment match these active filter settings."}
+                      </p>
+                      {projectsState.data.length > 0 && (
+                        <button
+                          onClick={handleResetFilters}
+                          className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                        >
+                          Reset Filter Fields
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
             {/* Quick General CTA Footer Card */}
             <div className="p-8 bg-blue-50/20 dark:bg-blue-950/15 border border-blue-100/50 dark:border-blue-900/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
@@ -558,7 +595,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
           >
             {/* Navigation back bar */}
             <button
-              onClick={() => setSelectedProjectId(null)}
+              onClick={() => setSelectedProjectSlug(null)}
               className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -570,15 +607,17 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
               {/* Cover Header Banner */}
               <div className="p-6 sm:p-8 bg-slate-950 text-white border-b border-slate-800 relative">
                 <div className="absolute top-4 right-4 text-[10px] font-mono text-slate-500 font-bold uppercase">
-                  Case ID: {selectedProject.id}
+                  Case ID: {selectedProject.slug}
                 </div>
                 <div className="space-y-4 max-w-4xl">
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
-                      {selectedProject.category}
-                    </span>
+                    {selectedProject.category && (
+                      <span className="text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
+                        {selectedProject.category.name}
+                      </span>
+                    )}
                     <span className="text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                      {selectedProject.clientType} Sector
+                      {formatClientType(selectedProject.client_type)} Sector
                     </span>
                   </div>
 
@@ -592,7 +631,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                         Sector/Client Segment:
                       </span>
                       <span className="text-slate-200 font-bold">
-                        {selectedProject.clientType} Field Deployment
+                        {formatClientType(selectedProject.client_type)} Field Deployment
                       </span>
                     </div>
                     <div>
@@ -651,7 +690,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       </h3>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
-                      {selectedProject.solutionDetail || selectedProject.description}
+                      {selectedProject.solution_detail || selectedProject.description}
                     </p>
                   </div>
 
@@ -675,7 +714,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                         Tactical Field Tasks Performed:
                       </span>
                       <ul className="space-y-2 text-xs">
-                        {selectedProject.scopeOfImplementation?.map((task, idx) => (
+                        {selectedProject.scope_of_implementation?.map((task, idx) => (
                           <li
                             key={idx}
                             className="flex items-start gap-2.5 text-slate-600 dark:text-slate-300"
@@ -697,9 +736,15 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         Technical Grid Diagram:
                       </span>
-                      {selectedProject.id === "proj-1" && <CCTVMapSchematic />}
-                      {selectedProject.id === "proj-2" && <NetworkTopologySchematic />}
-                      {selectedProject.id === "proj-3" && <LightboxInteractiveSchematic />}
+                      {selectedProject.slug === "integrated-ip-surveillance-biometric-gates" && (
+                        <CCTVMapSchematic />
+                      )}
+                      {selectedProject.slug === "corporate-lan-overhaul-preventive-support" && (
+                        <NetworkTopologySchematic />
+                      )}
+                      {selectedProject.slug === "exterior-led-lightboxes-corporate-branding" && (
+                        <LightboxInteractiveSchematic />
+                      )}
                     </div>
                   </div>
 
@@ -766,7 +811,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                       </h4>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedProject.technologiesInvolved?.map((tech, i) => (
+                      {selectedProject.technologies_involved?.map((tech, i) => (
                         <span
                           key={i}
                           className="text-[10px] font-mono font-bold px-2.5 py-1 rounded bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300"
@@ -783,7 +828,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
 
                   {/* Direct back control */}
                   <button
-                    onClick={() => setSelectedProjectId(null)}
+                    onClick={() => setSelectedProjectSlug(null)}
                     className="w-full py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-white text-xs font-bold rounded-xl uppercase tracking-wider transition"
                   >
                     ← {t("common.back")}
@@ -819,7 +864,7 @@ export const ProjectPortfolio: React.FC<ProjectPortfolioProps> = ({ onLaunchCons
                   {t("hero.ctaConsultation")}
                 </button>
                 <button
-                  onClick={() => setSelectedProjectId(null)}
+                  onClick={() => setSelectedProjectSlug(null)}
                   className="px-6 py-3.5 bg-slate-900 hover:bg-slate-850 text-slate-300 text-xs font-black uppercase tracking-widest rounded-xl border border-slate-850 transition text-center text-nowrap"
                 >
                   {t("common.cancel")}
