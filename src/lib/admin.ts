@@ -6,7 +6,8 @@
  * and course-registration management exist on the backend but have no
  * frontend screen yet — see docs/INTEGRATION_MATRIX.md's scope decisions.
  */
-import { apiRequest, ensureCsrfCookie } from "./apiClient";
+import { apiRequest, apiRequestPaginated, ensureCsrfCookie } from "./apiClient";
+import type { PaginatedResult } from "./apiClient";
 import type { InquiryStatus, InquiryType } from "./leads";
 
 export interface AdminUser {
@@ -57,25 +58,24 @@ export interface AdminInquiry {
   updated_at: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: { current_page: number; last_page: number; total: number };
-}
-
 export interface InquiryFilters {
   type?: InquiryType;
   status?: InquiryStatus;
   assigned_to?: number;
+  page?: number;
 }
 
-export const listInquiries = (filters: InquiryFilters = {}) => {
+export const listInquiries = (
+  filters: InquiryFilters = {},
+): Promise<PaginatedResult<AdminInquiry>> => {
   const params = new URLSearchParams();
   if (filters.type) params.set("type", filters.type);
   if (filters.status) params.set("status", filters.status);
   if (filters.assigned_to) params.set("assigned_to", String(filters.assigned_to));
+  if (filters.page) params.set("page", String(filters.page));
   const qs = params.toString();
 
-  return apiRequest<PaginatedResponse<AdminInquiry>>(`/api/admin/inquiries${qs ? `?${qs}` : ""}`);
+  return apiRequestPaginated<AdminInquiry>(`/api/admin/inquiries${qs ? `?${qs}` : ""}`);
 };
 
 export const getInquiry = (id: number) => apiRequest<AdminInquiry>(`/api/admin/inquiries/${id}`);

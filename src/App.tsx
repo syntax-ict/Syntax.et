@@ -91,7 +91,7 @@ export default function App() {
   const [selectedSolutionId, setSelectedSolutionId] = useState<string | null>(null);
   const [viewSolutionsHub, setViewSolutionsHub] = useState(false);
   const [preselectedCourse, setPreselectedCourse] = useState("");
-  const [refreshTrigger, setRefreshTrigger] = useState(false);
+  const [lastReference, setLastReference] = useState<string | null>(null);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState("");
 
@@ -104,7 +104,6 @@ export default function App() {
   const triggerNotification = (msg: string) => {
     setNotificationMsg(msg);
     setShowNotification(true);
-    setRefreshTrigger((prev) => !prev); // Automatically refresh lead ticket portal
     setTimeout(() => {
       setShowNotification(false);
     }, 5000);
@@ -164,6 +163,7 @@ export default function App() {
                   triggerNotification(
                     `Logged Consultation Request — Reference ${inquiry.reference}`,
                   );
+                  setLastReference(inquiry.reference);
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}
@@ -173,6 +173,7 @@ export default function App() {
               <QuoteWizard
                 onSuccess={(inquiry) => {
                   triggerNotification(`Logged Estimate Quotation — Reference ${inquiry.reference}`);
+                  setLastReference(inquiry.reference);
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}
@@ -194,6 +195,7 @@ export default function App() {
               <SupportWizard
                 onSuccess={(inquiry) => {
                   triggerNotification(`Logged Technical Support SLA ticket ${inquiry.reference}`);
+                  setLastReference(inquiry.reference);
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}
@@ -938,7 +940,7 @@ export default function App() {
               </div>
 
               <div className="max-w-5xl mx-auto">
-                <LeadPortal onTriggerRefresh={refreshTrigger} />
+                <LeadPortal lastReference={lastReference} />
               </div>
             </div>
           )}

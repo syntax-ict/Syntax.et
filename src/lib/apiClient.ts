@@ -98,11 +98,24 @@ export interface ApiRequestOptions {
   raw?: boolean;
 }
 
+interface RawEnvelope<T> {
+  success?: boolean;
+  data?: T;
+  message?: string;
+  errors?: Record<string, string[]>;
+  /** Present only on a paginated Laravel resource collection. */
+  meta?: PaginationMeta;
+}
+
 /**
- * Makes one request against the Laravel API and returns the unwrapped
- * `data` payload, or throws ApiError.
+ * Shared by apiRequest() and apiRequestPaginated(): does the actual fetch,
+ * validates the response, and returns the parsed envelope (or throws
+ * ApiError) without deciding what part of it the caller wants back.
  */
-export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+async function apiRequestRaw<T>(
+  path: string,
+  options: ApiRequestOptions,
+): Promise<RawEnvelope<T> | undefined> {
   const { method = "GET", body, raw = false } = options;
   const isWrite = method !== "GET";
 
@@ -133,7 +146,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   // 204 No Content (e.g. logout, delete) has no body to parse.
   if (response.status === 204) {
-    return undefined as T;
+    return undefined;
   }
 
   let payload: unknown;
@@ -147,12 +160,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     );
   }
 
-  const body_ = payload as {
-    success?: boolean;
-    data?: T;
-    message?: string;
-    errors?: Record<string, string[]>;
-  };
+  const body_ = payload as RawEnvelope<T>;
 
   if (!response.ok || body_.success === false) {
     throw new ApiError(
@@ -163,7 +171,43 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     );
   }
 
-  return body_.data as T;
+  return body_;
+}
+
+/**
+ * Makes one request against the Laravel API and returns the unwrapped
+ * `data` payload, or throws ApiError.
+ */
+export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+  const body_ = await apiRequestRaw<T>(path, options);
+  return body_?.data as T;
+}
+
+export interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
+/**
+ * For an endpoint backed by a Laravel paginated resource collection, whose
+ * envelope is flatter than the {success,data} shape apiRequest() expects —
+ * `{success, data: T[], links, meta}`, with pagination `meta` a sibling of
+ * `data` rather than nested inside it. Returns just the two fields callers
+ * need.
+ */
+export async function apiRequestPaginated<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<PaginatedResult<T>> {
+  const body_ = await apiRequestRaw<T[]>(path, options);
+  return { data: (body_?.data as T[]) ?? [], meta: body_?.meta as PaginationMeta };
 }
 
 /**
