@@ -181,8 +181,10 @@ export default function App() {
             {activeWizard === "training" && (
               <TrainingRegistration
                 preselectedCourse={preselectedCourse}
-                onSuccess={(lead) => {
-                  triggerNotification(`Registered student ${lead.data.name} for training`);
+                onSuccess={(registration) => {
+                  triggerNotification(
+                    `Registered for ${registration.course.title} — Registration #${registration.id}`,
+                  );
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}

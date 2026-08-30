@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Check,
   Send,
@@ -9,12 +9,15 @@ import {
   Calendar,
   Cpu,
 } from "lucide-react";
-import { getErrorMessage } from "../lib/errors";
 import { describeApiError } from "../lib/apiClient";
-import { submitInquiry, type InquirySummary } from "../lib/leads";
-import { listServices } from "../lib/content";
+import {
+  submitInquiry,
+  submitCourseRegistration,
+  type InquirySummary,
+  type CourseRegistrationSummary,
+} from "../lib/leads";
+import { listServices, listCourses, formatCourseMode } from "../lib/content";
 import { useFetch } from "../hooks/useFetch";
-import type { Lead } from "../types";
 import { useLocalization } from "../context/useLocalization";
 
 interface WizardProps {
@@ -786,14 +789,10 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   );
 };
 
-// TrainingRegistration still targets the legacy /api/leads endpoint and the
-// old Lead shape — it moves to POST /api/course-registrations in the
-// Course Registration integration pass, not this one (see
-// docs/INTEGRATION_MATRIX.md), so it keeps its own prop type rather than
-// sharing the other wizards' now-InquirySummary-typed WizardProps.
 interface TrainingRegistrationProps {
-  onSuccess: (lead: Lead) => void;
+  onSuccess: (registration: CourseRegistrationSummary) => void;
   onClose?: () => void;
+  /** A course title to preselect, e.g. from a "View Specs" deep link. */
   preselectedCourse?: string;
 }
 
@@ -805,22 +804,40 @@ export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [registrationId, setRegistrationId] = useState<number | null>(null);
+  const coursesState = useFetch(listCourses, []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     organization: "",
-    course: preselectedCourse || "CCTV Surveillance Design & Biometric Integration",
-    trainingType: "Face-to-face training",
+    courseId: null as number | null,
+    trainingType: "face_to_face" as "online" | "face_to_face" | "corporate",
     experience: "Beginner (No technical background)",
     goals: "",
   });
 
-  const coursesList = [
-    "CCTV Surveillance Design & Biometric Integration",
-    "Enterprise Networking & Security Foundations",
-    "Office Technology & Business Automation",
-  ];
+  // Preselect a course once the catalog loads: match the deep-linked title
+  // if one was passed, otherwise default to the first available course.
+  useEffect(() => {
+    if (coursesState.status === "success" && formData.courseId === null) {
+      const match = preselectedCourse
+        ? coursesState.data.find((c) =>
+            c.title.toLowerCase().includes(preselectedCourse.toLowerCase()),
+          )
+        : undefined;
+      const chosen = match || coursesState.data[0];
+      if (chosen) {
+        setFormData((prev) => ({ ...prev, courseId: chosen.id, trainingType: chosen.mode }));
+      }
+    }
+  }, [coursesState, preselectedCourse, formData.courseId]);
+
+  const selectedCourse =
+    coursesState.status === "success"
+      ? coursesState.data.find((c) => c.id === formData.courseId)
+      : undefined;
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
@@ -831,28 +848,30 @@ export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.courseId) {
+      setError("Please select a course.");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "training",
-          data: formData,
-        }),
+      const registration = await submitCourseRegistration({
+        course_id: formData.courseId,
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        organization: formData.organization || undefined,
+        training_mode: formData.trainingType,
+        experience_level: formData.experience,
+        goals: formData.goals,
       });
-
-      const result = await response.json();
-      if (result.success) {
-        onSuccess(result.lead);
-        setSuccess(true);
-      } else {
-        throw new Error(result.error || "Failed to submit course registration");
-      }
+      setRegistrationId(registration.id);
+      onSuccess(registration);
+      setSuccess(true);
     } catch (err) {
-      setError(getErrorMessage(err, "Something went wrong registering for the training."));
+      setError(describeApiError(err, "Something went wrong registering for the training."));
     } finally {
       setLoading(false);
     }
@@ -889,23 +908,27 @@ export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
             <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">
               Enrollment Specs:
             </p>
+            <p>
+              • Registration ID: <span className="font-semibold">{registrationId}</span>
+            </p>
             <p>• Student: {formData.name}</p>
             <p>
-              • Course: <span className="font-semibold">{formData.course}</span>
+              • Course: <span className="font-semibold">{selectedCourse?.title}</span>
             </p>
-            <p>• Mode: {formData.trainingType}</p>
+            <p>• Mode: {formatCourseMode(formData.trainingType)}</p>
           </div>
           <div className="flex gap-2 justify-center pt-2">
             <button
               onClick={() => {
                 setSuccess(false);
+                setRegistrationId(null);
                 setFormData({
                   name: "",
                   email: "",
                   phone: "",
                   organization: "",
-                  course: "CCTV Surveillance Design & Biometric Integration",
-                  trainingType: "Face-to-face training",
+                  courseId: null,
+                  trainingType: "face_to_face",
                   experience: "Beginner (No technical background)",
                   goals: "",
                 });
@@ -999,18 +1022,29 @@ export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Select Professional Course *
               </label>
-              <select
-                name="course"
-                value={formData.course}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {coursesList.map((c, i) => (
-                  <option key={i} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              {coursesState.status === "loading" && (
+                <p className="text-xs text-slate-400 animate-pulse py-2">Loading courses…</p>
+              )}
+              {coursesState.status === "error" && (
+                <p className="text-xs text-red-500">
+                  Couldn't load courses: {coursesState.error.message}
+                </p>
+              )}
+              {coursesState.status === "success" && (
+                <select
+                  name="course"
+                  required
+                  value={formData.courseId ?? ""}
+                  onChange={(e) => setFormData((p) => ({ ...p, courseId: Number(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {coursesState.data.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -1022,9 +1056,9 @@ export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="Face-to-face training">Face-to-face training</option>
-                <option value="Online training">Online training (Hybrid)</option>
-                <option value="Corporate training">Corporate team training</option>
+                <option value="face_to_face">Face-to-face training</option>
+                <option value="online">Online training (Hybrid)</option>
+                <option value="corporate">Corporate team training</option>
               </select>
             </div>
           </div>

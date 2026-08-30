@@ -25,7 +25,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocalization } from "../context/useLocalization";
-import { getErrorMessage } from "../lib/errors";
+import { describeApiError } from "../lib/apiClient";
+import { submitInquiry, submitCourseRegistration } from "../lib/leads";
 import {
   listCourses,
   formatCourseLevel,
@@ -66,13 +67,14 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
   const [submittingReg, setSubmittingReg] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regError, setRegError] = useState("");
+  const [lastRegistrationId, setLastRegistrationId] = useState<number | null>(null);
   const [regFormData, setRegFormData] = useState({
     name: "",
     email: "",
     phone: "",
     organization: "",
     courseTitle: "",
-    trainingType: "Face-to-face training",
+    trainingType: "face_to_face" as "online" | "face_to_face" | "corporate",
     experience: "Beginner (No technical background)",
     goals: "",
   });
@@ -81,6 +83,7 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
   const [submittingCorp, setSubmittingCorp] = useState(false);
   const [corpSuccess, setCorpSuccess] = useState(false);
   const [corpError, setCorpError] = useState("");
+  const [corpReference, setCorpReference] = useState("");
   const [corpFormData, setCorpFormData] = useState({
     name: "",
     company: "",
@@ -107,7 +110,7 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
         setRegFormData((prev) => ({
           ...prev,
           courseTitle: match.title,
-          trainingType: formatCourseMode(match.mode),
+          trainingType: match.mode,
         }));
       }
     }
@@ -160,7 +163,7 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
       setRegFormData((prev) => ({
         ...prev,
         courseTitle: courseObj.title,
-        trainingType: formatCourseMode(courseObj.mode),
+        trainingType: courseObj.mode,
       }));
     }
     // Scroll to section start
@@ -176,7 +179,7 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
     setRegFormData((prev) => ({
       ...prev,
       courseTitle: course.title,
-      trainingType: formatCourseMode(course.mode),
+      trainingType: course.mode,
     }));
     setRegSuccess(false);
     setRegError("");
@@ -192,66 +195,69 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
   // Submit Student Registration Form
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!registeringCourseId) {
+      setRegError("Please select a course to register for.");
+      return;
+    }
+
     setSubmittingReg(true);
     setRegError("");
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "training",
-          data: {
-            ...regFormData,
-            submissionDate: new Date().toISOString(),
-            selectedCourseId: registeringCourseId,
-          },
-        }),
+      const registration = await submitCourseRegistration({
+        course_id: registeringCourseId,
+        full_name: regFormData.name,
+        email: regFormData.email,
+        phone: regFormData.phone,
+        organization: regFormData.organization || undefined,
+        training_mode: regFormData.trainingType,
+        experience_level: regFormData.experience,
+        goals: regFormData.goals,
       });
-
-      const result = await response.json();
-      if (result.success) {
-        setRegSuccess(true);
-        // Sync with primary App.tsx wizard callback when successful
-        onPreselectCourse(regFormData.courseTitle);
-      } else {
-        throw new Error(result.error || "Failed to submit course registration.");
-      }
+      setLastRegistrationId(registration.id);
+      setRegSuccess(true);
+      // Sync with primary App.tsx wizard callback when successful
+      onPreselectCourse(regFormData.courseTitle);
     } catch (err) {
-      setRegError(getErrorMessage(err, "Something went wrong registering for the training."));
+      setRegError(describeApiError(err, "Something went wrong registering for the training."));
     } finally {
       setSubmittingReg(false);
     }
   };
 
-  // Submit Corporate Training Form
+  // Submit Corporate Training Form — the backend has no dedicated
+  // "corporate training" inquiry type, so this maps onto a consultation
+  // inquiry with a fixed problem area, reusing an option the consultation
+  // wizard already offers (docs/INTEGRATION_MATRIX.md, scope decisions).
   const handleCorporateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmittingCorp(true);
     setCorpError("");
 
-    try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "training",
-          data: {
-            ...corpFormData,
-            corporate: true,
-            submissionDate: new Date().toISOString(),
-          },
-        }),
-      });
+    const details = [
+      `Course template: ${corpFormData.courseInterest}`,
+      `Cohort size: ${corpFormData.cohortSize}`,
+      `Preferred location: ${corpFormData.locationPreference}`,
+      `Requested start: ${corpFormData.preferredTimeline}`,
+      corpFormData.customSpecs ? `Custom specs: ${corpFormData.customSpecs}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-      const result = await response.json();
-      if (result.success) {
-        setCorpSuccess(true);
-      } else {
-        throw new Error(result.error || "Failed to submit corporate request.");
-      }
+    try {
+      const inquiry = await submitInquiry({
+        type: "consultation",
+        full_name: corpFormData.name,
+        email: corpFormData.email,
+        phone: corpFormData.phone,
+        organization: corpFormData.company,
+        details,
+        meta: { problem_area: "Professional Training" },
+      });
+      setCorpReference(inquiry.reference);
+      setCorpSuccess(true);
     } catch (err) {
-      setCorpError(getErrorMessage(err, "Something went wrong registering corporate interest."));
+      setCorpError(describeApiError(err, "Something went wrong registering corporate interest."));
     } finally {
       setSubmittingCorp(false);
     }
@@ -1014,8 +1020,14 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
                         Please check your inbox shortly for curriculum details and lab credentials.
                       </p>
                     </div>
+                    <div className="bg-white dark:bg-slate-950 p-3 rounded-lg text-xs font-mono text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                      Registration ID: {lastRegistrationId}
+                    </div>
                     <button
-                      onClick={() => setRegSuccess(false)}
+                      onClick={() => {
+                        setRegSuccess(false);
+                        setLastRegistrationId(null);
+                      }}
                       className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition"
                     >
                       Submit Another Request
@@ -1096,13 +1108,17 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
                         <select
                           value={regFormData.trainingType}
                           onChange={(e) =>
-                            setRegFormData((p) => ({ ...p, trainingType: e.target.value }))
+                            setRegFormData((p) => ({
+                              ...p,
+                              trainingType: e.target.value as
+                                "online" | "face_to_face" | "corporate",
+                            }))
                           }
                           className="w-full px-3 py-2 text-xs border border-slate-250 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                         >
-                          <option value="Face-to-face training">Face-to-Face Physical Labs</option>
-                          <option value="Online training">Online Simulators & Hybrid</option>
-                          <option value="Corporate training">Corporate Team Cohort</option>
+                          <option value="face_to_face">Face-to-Face Physical Labs</option>
+                          <option value="online">Online Simulators & Hybrid</option>
+                          <option value="corporate">Corporate Team Cohort</option>
                         </select>
                       </div>
                       <div>
@@ -1298,8 +1314,14 @@ export const TrainingAcademy: React.FC<TrainingAcademyProps> = ({
                         curriculum specs.
                       </p>
                     </div>
+                    <div className="bg-white dark:bg-slate-950 p-3 rounded-lg text-xs font-mono text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+                      Reference: {corpReference}
+                    </div>
                     <button
-                      onClick={() => setCorpSuccess(false)}
+                      onClick={() => {
+                        setCorpSuccess(false);
+                        setCorpReference("");
+                      }}
                       className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition"
                     >
                       Submit Another Query
