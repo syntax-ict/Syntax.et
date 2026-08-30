@@ -1,0 +1,6 @@
+{
+  "name": "Syntax Technology",
+  "description": "Official business website of Syntax Technology, providing integrated IT infrastructure, security, professional training, and business support solutions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
