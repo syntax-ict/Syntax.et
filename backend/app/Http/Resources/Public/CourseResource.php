@@ -17,6 +17,10 @@ class CourseResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            // Exposed publicly (unlike other public resources) because the
+            // course-registration endpoint needs a numeric course_id, not a
+            // slug — this is the one FK a public form must supply directly.
+            'id' => $this->id,
             'slug' => $this->slug,
             'title' => $this->title,
             'duration' => $this->duration,
@@ -38,6 +42,7 @@ class CourseResource extends JsonResource
             // the whole object rather than per-field.
             'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'slug' => $this->category->slug,
+                'name' => $this->category->name,
             ] : null),
         ];
     }

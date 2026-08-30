@@ -34,6 +34,7 @@ class ProjectResource extends JsonResource
             // the whole object rather than per-field.
             'category' => $this->whenLoaded('category', fn () => $this->category ? [
                 'slug' => $this->category->slug,
+                'name' => $this->category->name,
             ] : null),
             'images' => ProjectImageResource::collection($this->whenLoaded('images')),
         ];
