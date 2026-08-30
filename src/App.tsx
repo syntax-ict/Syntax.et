@@ -160,8 +160,10 @@ export default function App() {
             </button>
             {activeWizard === "consultation" && (
               <ConsultationWizard
-                onSuccess={(lead) => {
-                  triggerNotification(`Logged Consultation Request for ${lead.data.organization}`);
+                onSuccess={(inquiry) => {
+                  triggerNotification(
+                    `Logged Consultation Request — Reference ${inquiry.reference}`,
+                  );
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}
@@ -169,8 +171,8 @@ export default function App() {
             )}
             {activeWizard === "quote" && (
               <QuoteWizard
-                onSuccess={(lead) => {
-                  triggerNotification(`Logged Estimate Quotation for ${lead.data.organization}`);
+                onSuccess={(inquiry) => {
+                  triggerNotification(`Logged Estimate Quotation — Reference ${inquiry.reference}`);
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}
@@ -188,8 +190,8 @@ export default function App() {
             )}
             {activeWizard === "support" && (
               <SupportWizard
-                onSuccess={(lead) => {
-                  triggerNotification(`Logged Technical Support SLA ticket #${lead.id}`);
+                onSuccess={(inquiry) => {
+                  triggerNotification(`Logged Technical Support SLA ticket ${inquiry.reference}`);
                   setActiveTab("tracker");
                 }}
                 onClose={() => setActiveWizard(null)}

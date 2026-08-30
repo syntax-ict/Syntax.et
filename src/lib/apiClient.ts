@@ -165,3 +165,20 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   return body_.data as T;
 }
+
+/**
+ * Turns a caught error into a message worth showing a user. For a 422
+ * ApiError this surfaces the first concrete field error (e.g. "The email
+ * field is required.") rather than the generic "The given data was
+ * invalid." envelope message, since that's almost always more useful in a
+ * single error banner. Falls back to the error's own message, then to
+ * `fallback` for anything unrecognized.
+ */
+export function describeApiError(err: unknown, fallback: string): string {
+  if (err instanceof ApiError) {
+    const firstFieldError = err.errors && Object.values(err.errors)[0]?.[0];
+    return firstFieldError || err.message || fallback;
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}

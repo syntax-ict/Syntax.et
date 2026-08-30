@@ -7,19 +7,18 @@ import {
   Loader2,
   DollarSign,
   Calendar,
-  Shield,
   Cpu,
-  BookOpen,
-  Printer,
 } from "lucide-react";
-import { PaymentCheckout } from "./PaymentCheckout";
-import { initializePayment } from "../lib/payments";
 import { getErrorMessage } from "../lib/errors";
+import { describeApiError } from "../lib/apiClient";
+import { submitInquiry, type InquirySummary } from "../lib/leads";
+import { listServices } from "../lib/content";
+import { useFetch } from "../hooks/useFetch";
 import type { Lead } from "../types";
 import { useLocalization } from "../context/useLocalization";
 
 interface WizardProps {
-  onSuccess: (lead: Lead) => void;
+  onSuccess: (inquiry: InquirySummary) => void;
   onClose?: () => void;
 }
 
@@ -28,9 +27,7 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPaymentCheckout, setShowPaymentCheckout] = useState(false);
-  const [txRef, setTxRef] = useState("");
-  const [pendingLead, setPendingLead] = useState<Lead | null>(null);
+  const [reference, setReference] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -61,83 +58,28 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
     setError("");
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "consultation",
-          data: formData,
-        }),
+      const inquiry = await submitInquiry({
+        type: "consultation",
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        organization: formData.organization || undefined,
+        details: formData.details,
+        priority: formData.urgency.toLowerCase() as "low" | "medium" | "high",
+        meta: {
+          problem_area: formData.problemArea,
+          budget: formData.budget,
+        },
       });
-
-      const result = await response.json();
-      if (result.success) {
-        // Lead created successfully. Initialize payment simulation
-        const generatedTxRef = `ST-CONS-${Date.now().toString(36).toUpperCase()}`;
-
-        const paymentRes = await initializePayment({
-          txRef: generatedTxRef,
-          amount: 250, // 250 Birr refundable consultation fee
-          currency: "ETB",
-          email: formData.email,
-          phone: formData.phone,
-          name: formData.name,
-          description: `Consultation Reservation Fee - ${formData.organization}`,
-          provider: "chapa",
-        });
-
-        if (paymentRes.success) {
-          setTxRef(generatedTxRef);
-          setPendingLead(result.lead);
-          setShowPaymentCheckout(true);
-        } else {
-          // Fallback to free standard submission if payment system fails
-          onSuccess(result.lead);
-          setStep(4);
-        }
-      } else {
-        throw new Error(result.error || "Failed to submit request");
-      }
+      setReference(inquiry.reference);
+      onSuccess(inquiry);
+      setStep(4);
     } catch (err) {
-      setError(getErrorMessage(err, "Something went wrong. Please try again."));
+      setError(describeApiError(err, "Something went wrong. Please try again."));
     } finally {
       setLoading(false);
     }
   };
-
-  if (showPaymentCheckout && txRef) {
-    return (
-      <div
-        id="consultation-wizard-container"
-        className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in"
-      >
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-          Secure Consultation Deposit
-        </h3>
-        <p className="text-xs text-slate-500 mb-6">
-          Syntax Technology secures bookings with a small simulated deposit to protect field
-          engineer schedules.
-        </p>
-        <PaymentCheckout
-          txRef={txRef}
-          onVerificationComplete={(status) => {
-            if (status === "PAID" && pendingLead) {
-              setShowPaymentCheckout(false);
-              onSuccess(pendingLead);
-              setStep(4);
-            } else {
-              setError("Payment verification failed. Please try again.");
-              setShowPaymentCheckout(false);
-            }
-          }}
-          onCancel={() => {
-            setError("Payment cancelled. You can retry submission.");
-            setShowPaymentCheckout(false);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -392,12 +334,13 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
             </p>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/30 p-3.5 rounded-lg text-xs font-mono text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
-            Ticket ID: ST-{Math.floor(10000 + Math.random() * 90000)}
+            Ticket ID: {reference}
           </div>
           <div className="flex gap-2 justify-center pt-2">
             <button
               onClick={() => {
                 setStep(1);
+                setReference("");
                 setFormData({
                   name: "",
                   email: "",
@@ -428,18 +371,32 @@ export const ConsultationWizard: React.FC<WizardProps> = ({ onSuccess, onClose }
   );
 };
 
+// Rough, cosmetic-only per-service cost estimates for the "high-level base
+// estimate" shown before submission — the backend has no pricing data for
+// services, so this is a local heuristic, not a quote. Keyed by the real
+// service slug so submissions always carry backend-valid slugs
+// (architecture §6: meta.selected_services must reference real services).
+const SERVICE_ESTIMATES: Record<string, { baseCost: number; scalesByQuantity: boolean }> = {
+  "cctv-surveillance": { baseCost: 450, scalesByQuantity: false },
+  "biometric-attendance": { baseCost: 350, scalesByQuantity: false },
+  "it-infrastructure": { baseCost: 120, scalesByQuantity: true },
+  "technical-support": { baseCost: 80, scalesByQuantity: true },
+  "printing-signage": { baseCost: 500, scalesByQuantity: false },
+  "corporate-group-training": { baseCost: 950, scalesByQuantity: false },
+};
+const DEFAULT_SERVICE_ESTIMATE = { baseCost: 200, scalesByQuantity: false };
+
 export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [reference, setReference] = useState("");
+  const [selectedServiceSlugs, setSelectedServiceSlugs] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [timeline, setTimeline] = useState("Within 30 days");
-
   const [isPriority, setIsPriority] = useState(true);
-  const [showPaymentCheckout, setShowPaymentCheckout] = useState(false);
-  const [txRef, setTxRef] = useState("");
-  const [pendingLead, setPendingLead] = useState<Lead | null>(null);
+
+  const servicesState = useFetch(listServices, []);
 
   const [clientInfo, setClientInfo] = useState({
     name: "",
@@ -449,39 +406,28 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
     details: "",
   });
 
-  const availableServices = [
-    { id: "cctv", name: "CCTV & Surveillance Design", baseCost: 450, icon: Shield },
-    { id: "biometrics", name: "Biometric Attendance Terminals", baseCost: 350, icon: Cpu },
-    { id: "net", name: "IT Network Structured Cabling", baseCost: 120, icon: Cpu },
-    { id: "maintenance", name: "Computer Hardware Maintenance SLA", baseCost: 80, icon: Cpu },
-    { id: "branding", name: "Corporate Print & Store Signage", baseCost: 500, icon: Printer },
-    { id: "training", name: "Corporate Group Skills Course", baseCost: 950, icon: BookOpen },
-  ];
-
-  const handleToggleService = (serviceName: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(serviceName) ? prev.filter((s) => s !== serviceName) : [...prev, serviceName],
+  const handleToggleService = (slug: string) => {
+    setSelectedServiceSlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug],
     );
   };
 
   const calculateEstimate = () => {
     let total = 0;
-    selectedServices.forEach((sName) => {
-      const s = availableServices.find((as) => as.name === sName);
-      if (s) {
-        if (s.id === "net" || s.id === "maintenance") {
-          total += s.baseCost * quantity; // Scaled by nodes/computers
-        } else {
-          total += s.baseCost;
-        }
-      }
+    selectedServiceSlugs.forEach((slug) => {
+      const estimate = SERVICE_ESTIMATES[slug] ?? DEFAULT_SERVICE_ESTIMATE;
+      total += estimate.scalesByQuantity ? estimate.baseCost * quantity : estimate.baseCost;
     });
     return total;
   };
 
+  const scalesByQuantity = selectedServiceSlugs.some(
+    (slug) => (SERVICE_ESTIMATES[slug] ?? DEFAULT_SERVICE_ESTIMATE).scalesByQuantity,
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedServices.length === 0) {
+    if (selectedServiceSlugs.length === 0) {
       setError("Please select at least one core service.");
       return;
     }
@@ -489,98 +435,46 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
     setLoading(true);
     setError("");
 
-    const estimate = calculateEstimate();
-    const dataPayload = {
-      ...clientInfo,
-      selectedServices,
-      quantity,
-      timeline,
-      estimatedBaseCost: `$${estimate}`,
-      prioritySLA: isPriority ? "Priority (500 ETB Deposit)" : "Standard (Free)",
-    };
+    const selectedNames =
+      servicesState.status === "success"
+        ? selectedServiceSlugs.map(
+            (slug) => servicesState.data.find((s) => s.slug === slug)?.name || slug,
+          )
+        : selectedServiceSlugs;
+
+    const details = [
+      `Selected services: ${selectedNames.join(", ")}`,
+      `Timeline: ${timeline}`,
+      scalesByQuantity ? `Quantity/nodes: ${quantity}` : null,
+      clientInfo.details ? `Additional notes: ${clientInfo.details}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "quote",
-          data: dataPayload,
-        }),
+      const inquiry = await submitInquiry({
+        type: "quote",
+        full_name: clientInfo.name,
+        email: clientInfo.email,
+        phone: clientInfo.phone,
+        organization: clientInfo.organization || undefined,
+        details,
+        meta: {
+          selected_services: selectedServiceSlugs,
+          quantity,
+          timeline,
+          is_priority: isPriority,
+        },
       });
-
-      const result = await response.json();
-      if (result.success) {
-        if (isPriority) {
-          const generatedTxRef = `ST-QUOTE-${Date.now().toString(36).toUpperCase()}`;
-          const paymentRes = await initializePayment({
-            txRef: generatedTxRef,
-            amount: 500, // 500 ETB priority site survey deposit
-            currency: "ETB",
-            email: clientInfo.email,
-            phone: clientInfo.phone,
-            name: clientInfo.name,
-            description: `Priority Survey Deposit - ${clientInfo.organization}`,
-            provider: "chapa",
-          });
-
-          if (paymentRes.success) {
-            setTxRef(generatedTxRef);
-            setPendingLead(result.lead);
-            setShowPaymentCheckout(true);
-          } else {
-            // Fallback to standard standard free registration if payment gateway fails
-            onSuccess(result.lead);
-            setSuccess(true);
-          }
-        } else {
-          // Standard lead goes straight to success screen
-          onSuccess(result.lead);
-          setSuccess(true);
-        }
-      } else {
-        throw new Error(result.error || "Failed to submit quote request");
-      }
+      setReference(inquiry.reference);
+      onSuccess(inquiry);
+      setSuccess(true);
     } catch (err) {
-      setError(getErrorMessage(err, "Something went wrong submitting quote request."));
+      setError(describeApiError(err, "Something went wrong submitting quote request."));
     } finally {
       setLoading(false);
     }
   };
-
-  if (showPaymentCheckout && txRef) {
-    return (
-      <div
-        id="quote-wizard-container"
-        className="p-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm animate-fade-in"
-      >
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-          Secure Priority Audit Deposit
-        </h3>
-        <p className="text-xs text-slate-500 mb-6">
-          Authorize a Priority Survey Booking deposit securely through our local payment gateway
-          simulation.
-        </p>
-        <PaymentCheckout
-          txRef={txRef}
-          onVerificationComplete={(status) => {
-            if (status === "PAID" && pendingLead) {
-              setShowPaymentCheckout(false);
-              onSuccess(pendingLead);
-              setSuccess(true);
-            } else {
-              setError("Payment verification failed. Please try again.");
-              setShowPaymentCheckout(false);
-            }
-          }}
-          onCancel={() => {
-            setError("Payment cancelled. Standard request will still be processed.");
-            setShowPaymentCheckout(false);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -614,19 +508,30 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
               Submission Details:
             </p>
             <p>
+              • Reference:{" "}
+              <span className="font-bold text-slate-900 dark:text-white">{reference}</span>
+            </p>
+            <p>
               • Estimated Total:{" "}
               <span className="font-bold text-emerald-600 dark:text-emerald-400">
                 ${calculateEstimate()}
               </span>
             </p>
-            <p>• Items: {selectedServices.join(", ")}</p>
+            <p>
+              • Items:{" "}
+              {servicesState.status === "success"
+                ? selectedServiceSlugs
+                    .map((slug) => servicesState.data.find((s) => s.slug === slug)?.name || slug)
+                    .join(", ")
+                : `${selectedServiceSlugs.length} service(s) selected`}
+            </p>
             <p>• Target Timeline: {timeline}</p>
           </div>
           <div className="flex gap-2 justify-center pt-2">
             <button
               onClick={() => {
                 setSuccess(false);
-                setSelectedServices([]);
+                setSelectedServiceSlugs([]);
                 setQuantity(1);
                 setClientInfo({ name: "", email: "", phone: "", organization: "", details: "" });
               }}
@@ -658,52 +563,57 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
             <label className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
               1. Select Core Solutions required:
             </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {availableServices.map((as) => {
-                const isSelected = selectedServices.includes(as.name);
-                const Icon = as.icon;
-                return (
-                  <button
-                    type="button"
-                    key={as.id}
-                    onClick={() => handleToggleService(as.name)}
-                    className={`flex items-start gap-3 p-3 rounded-lg border text-left transition ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 text-slate-900 dark:text-white"
-                        : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400"
-                    }`}
-                  >
-                    <div
-                      className={`p-1.5 rounded-md mt-0.5 ${isSelected ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800"}`}
+
+            {servicesState.status === "loading" && (
+              <p className="text-xs text-slate-400 animate-pulse py-4">Loading services…</p>
+            )}
+
+            {servicesState.status === "error" && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 rounded-lg text-xs">
+                Couldn't load our service list: {servicesState.error.message}
+              </div>
+            )}
+
+            {servicesState.status === "success" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {servicesState.data.map((svc) => {
+                  const isSelected = selectedServiceSlugs.includes(svc.slug);
+                  const estimate = SERVICE_ESTIMATES[svc.slug] ?? DEFAULT_SERVICE_ESTIMATE;
+                  return (
+                    <button
+                      type="button"
+                      key={svc.slug}
+                      onClick={() => handleToggleService(svc.slug)}
+                      className={`flex items-start gap-3 p-3 rounded-lg border text-left transition ${
+                        isSelected
+                          ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 text-slate-900 dark:text-white"
+                          : "border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-600 dark:text-slate-400"
+                      }`}
                     >
-                      <Icon className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <span className="block text-sm font-medium text-slate-900 dark:text-white">
-                        {as.name}
-                      </span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {as.id === "net"
-                          ? "Starts at $120 per node"
-                          : as.id === "maintenance"
-                            ? "Starts at $80 per device"
-                            : `Base cost: $${as.baseCost}`}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                      <div
+                        className={`p-1.5 rounded-md mt-0.5 ${isSelected ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" : "bg-slate-100 dark:bg-slate-800"}`}
+                      >
+                        <Cpu className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="block text-sm font-medium text-slate-900 dark:text-white">
+                          {svc.name}
+                        </span>
+                        <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {estimate.scalesByQuantity
+                            ? `Starts at $${estimate.baseCost} per unit`
+                            : `Base cost: $${estimate.baseCost}`}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Scaler Node count if network/computer selected */}
-          {selectedServices.some(
-            (s) =>
-              s.includes("Node") ||
-              s.includes("Device") ||
-              s.includes("Maintenance") ||
-              s.includes("Cabling"),
-          ) && (
+          {scalesByQuantity && (
             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg space-y-2">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Number of workstations / network nodes to configure:
@@ -822,11 +732,11 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
                 <span className="text-xl shrink-0 mt-0.5">⚡</span>
                 <div>
                   <span className="block text-xs font-bold text-slate-900 dark:text-white">
-                    Priority Audit (500 ETB)
+                    Priority Audit
                   </span>
                   <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Guaranteed 24hr site survey, stamped official quotation & custom SLA design
-                    blueprint.
+                    Flagged for expedited handling — a coordinator schedules your site survey within
+                    24 hours.
                   </span>
                 </div>
               </button>
@@ -876,7 +786,18 @@ export const QuoteWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => {
   );
 };
 
-export const TrainingRegistration: React.FC<WizardProps & { preselectedCourse?: string }> = ({
+// TrainingRegistration still targets the legacy /api/leads endpoint and the
+// old Lead shape — it moves to POST /api/course-registrations in the
+// Course Registration integration pass, not this one (see
+// docs/INTEGRATION_MATRIX.md), so it keeps its own prop type rather than
+// sharing the other wizards' now-InquirySummary-typed WizardProps.
+interface TrainingRegistrationProps {
+  onSuccess: (lead: Lead) => void;
+  onClose?: () => void;
+  preselectedCourse?: string;
+}
+
+export const TrainingRegistration: React.FC<TrainingRegistrationProps> = ({
   onSuccess,
   onClose,
   preselectedCourse = "",
@@ -1172,6 +1093,7 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [reference, setReference] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -1195,25 +1117,22 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
     setError("");
 
     try {
-      const response = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "support",
-          data: formData,
-        }),
+      const inquiry = await submitInquiry({
+        type: "support",
+        full_name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        organization: formData.organization || undefined,
+        subject: formData.subject,
+        details: formData.details,
+        priority: formData.priority.toLowerCase() as "low" | "medium" | "urgent",
       });
-
-      const result = await response.json();
-      if (result.success) {
-        onSuccess(result.lead);
-        setSuccess(true);
-      } else {
-        throw new Error(result.error || "Failed to submit support ticket");
-      }
+      setReference(inquiry.reference);
+      onSuccess(inquiry);
+      setSuccess(true);
     } catch (err) {
       setError(
-        getErrorMessage(err, "Failed to log support incident. Please check server connections."),
+        describeApiError(err, "Failed to log support incident. Please check server connections."),
       );
     } finally {
       setLoading(false);
@@ -1256,6 +1175,9 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
             <p className="font-semibold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-1">
               Ticket Details:
             </p>
+            <p>
+              • Ticket ID: <span className="font-semibold">{reference}</span>
+            </p>
             <p>• Contact: {formData.name}</p>
             <p>
               • Issue: <span className="font-semibold">{formData.subject}</span>
@@ -1273,6 +1195,7 @@ export const SupportWizard: React.FC<WizardProps> = ({ onSuccess, onClose }) => 
             <button
               onClick={() => {
                 setSuccess(false);
+                setReference("");
                 setFormData({
                   name: "",
                   email: "",
