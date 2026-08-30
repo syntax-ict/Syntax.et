@@ -35,7 +35,13 @@ import {
   Smartphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { BUSINESS_PILLARS, CUSTOMER_PROBLEMS, PORTFOLIO_PROJECTS } from "./data";
+import {
+  listSolutionCategories,
+  listCustomerProblems,
+  listProjects,
+  formatClientType,
+} from "./lib/content";
+import { useFetch } from "./hooks/useFetch";
 import { Header } from "./components/Header";
 import { AIAssistant } from "./components/AIAssistant";
 import { LeadPortal } from "./components/LeadPortal";
@@ -88,6 +94,12 @@ export default function App() {
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMsg, setNotificationMsg] = useState("");
+
+  // Homepage content — fetched once on mount regardless of active tab, since
+  // switching back to "solutions"/"problems" shouldn't re-trigger a request.
+  const categoriesState = useFetch(listSolutionCategories, []);
+  const projectsState = useFetch(listProjects, []);
+  const customerProblemsState = useFetch(listCustomerProblems, []);
 
   const triggerNotification = (msg: string) => {
     setNotificationMsg(msg);
@@ -323,128 +335,124 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {BUSINESS_PILLARS.map((pillar) => (
-                      <div
-                        key={pillar.id}
-                        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-slate-200 dark:hover:border-slate-800 transition"
-                      >
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`p-2.5 rounded-xl ${pillar.colorTheme.primary} shrink-0`}
-                            >
-                              <IconResolver name={pillar.iconName} className="w-6 h-6" />
+                  {categoriesState.status === "loading" && (
+                    <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
+                      Loading business pillars…
+                    </div>
+                  )}
+
+                  {categoriesState.status === "error" && (
+                    <div className="p-6 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-center space-y-1">
+                      <p className="text-xs font-bold text-red-600 dark:text-red-400">
+                        Couldn't load our business pillars.
+                      </p>
+                      <p className="text-[11px] text-red-500/80 dark:text-red-400/70">
+                        {categoriesState.error.message}
+                      </p>
+                    </div>
+                  )}
+
+                  {categoriesState.status === "success" && categoriesState.data.length === 0 && (
+                    <div className="py-12 text-center text-xs text-slate-400">
+                      No business pillars are published yet.
+                    </div>
+                  )}
+
+                  {categoriesState.status === "success" && categoriesState.data.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {categoriesState.data.map((category) => (
+                        <div
+                          key={category.slug}
+                          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-slate-200 dark:hover:border-slate-800 transition"
+                        >
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`p-2.5 rounded-xl ${category.color_theme.primary} shrink-0`}
+                              >
+                                <IconResolver name={category.icon} className="w-6 h-6" />
+                              </div>
+                              <h3 className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">
+                                {category.name}
+                              </h3>
                             </div>
-                            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">
-                              {pillar.title}
-                            </h3>
-                          </div>
 
-                          <p className="text-xs text-slate-400 leading-relaxed italic">
-                            {pillar.shortDescription}
-                          </p>
+                            <p className="text-xs text-slate-400 leading-relaxed italic">
+                              {category.short_description}
+                            </p>
 
-                          <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
-                            {pillar.detailedDescription}
-                          </p>
+                            <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
+                              {category.detailed_description}
+                            </p>
 
-                          {/* Sub-services breakdown list */}
-                          <div className="space-y-3 pt-2">
-                            <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                              Services Included:
-                            </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {pillar.services.map((svc, i) => {
-                                // Dynamically map sub-services to Solution Specification IDs
-                                let mappedSolutionId: string | null = null;
-                                if (svc.name.includes("CCTV"))
-                                  mappedSolutionId = "cctv-surveillance";
-                                else if (svc.name.includes("Biometric"))
-                                  mappedSolutionId = "biometric-attendance";
-                                else if (
-                                  svc.name.includes("Access Control") ||
-                                  svc.name.includes("GPS")
-                                )
-                                  mappedSolutionId = "gps-fleet-tracking";
-                                else if (svc.name.includes("Infrastructure"))
-                                  mappedSolutionId = "it-infrastructure";
-                                else if (
-                                  svc.name.includes("Maintenance") ||
-                                  svc.name.includes("Support")
-                                )
-                                  mappedSolutionId = "technical-support";
-                                else if (svc.name.includes("Integration"))
-                                  mappedSolutionId = "software-system-integration";
-
-                                return (
-                                  <div
-                                    key={i}
-                                    onClick={() => {
-                                      if (mappedSolutionId) {
-                                        setSelectedSolutionId(mappedSolutionId);
+                            {/* Sub-services breakdown list */}
+                            {category.services && category.services.length > 0 && (
+                              <div className="space-y-3 pt-2">
+                                <span className="block text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                  Services Included:
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {category.services.map((svc) => (
+                                    <div
+                                      key={svc.slug}
+                                      onClick={() => {
+                                        setSelectedSolutionId(svc.slug);
                                         setViewSolutionsHub(true);
-                                      }
-                                    }}
-                                    className={`p-3 rounded-xl border space-y-1 transition ${
-                                      mappedSolutionId
-                                        ? "bg-slate-50/90 hover:bg-slate-100 dark:bg-slate-950/40 dark:hover:bg-slate-900/60 cursor-pointer border-slate-150 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700"
-                                        : "bg-slate-50/70 dark:bg-slate-950/40 border-slate-100/50 dark:border-slate-800/40"
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between gap-1.5">
-                                      <span className="block text-xs font-bold text-slate-900 dark:text-white">
-                                        {svc.name}
-                                      </span>
-                                      {mappedSolutionId && (
+                                      }}
+                                      className="p-3 rounded-xl border space-y-1 transition bg-slate-50/90 hover:bg-slate-100 dark:bg-slate-950/40 dark:hover:bg-slate-900/60 cursor-pointer border-slate-150 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700"
+                                    >
+                                      <div className="flex items-center justify-between gap-1.5">
+                                        <span className="block text-xs font-bold text-slate-900 dark:text-white">
+                                          {svc.name}
+                                        </span>
                                         <ArrowRight className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                                      )}
+                                      </div>
+                                      <span className="block text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
+                                        {svc.short_description}
+                                      </span>
                                     </div>
-                                    <span className="block text-[10px] text-slate-500 dark:text-slate-400 leading-snug">
-                                      {svc.description}
-                                    </span>
-                                  </div>
-                                );
-                              })}
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              Pillar ID: {category.slug}
+                            </span>
+                            <div className="flex gap-2">
+                              {category.slug === "professional-training" ? (
+                                <button
+                                  onClick={() => {
+                                    setActiveTab("training");
+                                  }}
+                                  className="px-4 py-2 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 rounded-lg hover:bg-purple-200 transition"
+                                >
+                                  Browse Courses
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setActiveWizard("quote");
+                                  }}
+                                  className="px-4 py-2 text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition"
+                                >
+                                  Get Quote Estimate
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setActiveWizard("consultation")}
+                                className="px-4 py-2 text-xs font-bold bg-slate-900 text-white dark:bg-slate-800 rounded-lg hover:bg-slate-800 transition"
+                              >
+                                Consultation Request
+                              </button>
                             </div>
                           </div>
                         </div>
-
-                        <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            Pillar ID: {pillar.id}
-                          </span>
-                          <div className="flex gap-2">
-                            {pillar.id === "training" ? (
-                              <button
-                                onClick={() => {
-                                  setActiveTab("training");
-                                }}
-                                className="px-4 py-2 text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/20 dark:text-purple-400 rounded-lg hover:bg-purple-200 transition"
-                              >
-                                Browse Courses
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setActiveWizard("quote");
-                                }}
-                                className="px-4 py-2 text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-400 rounded-lg hover:bg-blue-100 transition"
-                              >
-                                Get Quote Estimate
-                              </button>
-                            )}
-                            <button
-                              onClick={() => setActiveWizard("consultation")}
-                              className="px-4 py-2 text-xs font-bold bg-slate-900 text-white dark:bg-slate-800 rounded-lg hover:bg-slate-800 transition"
-                            >
-                              Consultation Request
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 {/* 6. Featured Solutions (Outcome Focus) */}
@@ -652,71 +660,96 @@ export default function App() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {PORTFOLIO_PROJECTS.map((project) => (
-                      <div
-                        key={project.id}
-                        className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 space-y-5 flex flex-col justify-between hover:border-slate-200 dark:hover:border-slate-750 transition"
-                      >
-                        <div className="space-y-4">
-                          <div className="space-y-1">
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                              {project.clientType} Sector
-                            </span>
-                            <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
-                              {project.title}
-                            </h3>
-                          </div>
+                  {projectsState.status === "loading" && (
+                    <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
+                      Loading case histories…
+                    </div>
+                  )}
 
-                          <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
-                            {project.description}
-                          </p>
+                  {projectsState.status === "error" && (
+                    <div className="p-6 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-center space-y-1">
+                      <p className="text-xs font-bold text-red-600 dark:text-red-400">
+                        Couldn't load our case histories.
+                      </p>
+                      <p className="text-[11px] text-red-500/80 dark:text-red-400/70">
+                        {projectsState.error.message}
+                      </p>
+                    </div>
+                  )}
 
-                          {/* Delivered hardware / software array */}
-                          <div className="space-y-2">
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                              Installed Systems:
-                            </span>
-                            <div className="space-y-1.5">
-                              {project.deliverables.map((del, idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
-                                >
-                                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0"></span>
-                                  <span>{del}</span>
-                                </div>
-                              ))}
+                  {projectsState.status === "success" && projectsState.data.length === 0 && (
+                    <div className="py-12 text-center text-xs text-slate-400">
+                      No featured case histories are published yet.
+                    </div>
+                  )}
+
+                  {projectsState.status === "success" && projectsState.data.length > 0 && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {projectsState.data.map((project) => (
+                        <div
+                          key={project.slug}
+                          className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 space-y-5 flex flex-col justify-between hover:border-slate-200 dark:hover:border-slate-750 transition"
+                        >
+                          <div className="space-y-4">
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                {formatClientType(project.client_type)} Sector
+                              </span>
+                              <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
+                                {project.title}
+                              </h3>
+                            </div>
+
+                            <p className="text-xs text-slate-600 dark:text-slate-350 leading-relaxed">
+                              {project.description}
+                            </p>
+
+                            {/* Delivered hardware / software array */}
+                            <div className="space-y-2">
+                              <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                                Installed Systems:
+                              </span>
+                              <div className="space-y-1.5">
+                                {project.deliverables.map((del, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
+                                  >
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0"></span>
+                                    <span>{del}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Audited metrics/results */}
+                            <div className="p-3 bg-emerald-50/30 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/20 rounded-xl space-y-1">
+                              <span className="block text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                                Audited Results:
+                              </span>
+                              <ul className="space-y-1 text-xs">
+                                {project.results.map((res, idx) => (
+                                  <li
+                                    key={idx}
+                                    className="text-[11px] font-semibold text-slate-800 dark:text-slate-200"
+                                  >
+                                    ✓ {res}
+                                  </li>
+                                ))}
+                              </ul>
                             </div>
                           </div>
 
-                          {/* Audited metrics/results */}
-                          <div className="p-3 bg-emerald-50/30 dark:bg-emerald-950/10 border border-emerald-100/50 dark:border-emerald-900/20 rounded-xl space-y-1">
-                            <span className="block text-[9px] font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-                              Audited Results:
-                            </span>
-                            <ul className="space-y-1 text-xs">
-                              {project.results.map((res, idx) => (
-                                <li
-                                  key={idx}
-                                  className="text-[11px] font-semibold text-slate-800 dark:text-slate-200"
-                                >
-                                  ✓ {res}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                          <button
+                            onClick={() => setActiveWizard("consultation")}
+                            className="w-full mt-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition"
+                          >
+                            Request Similar Deployment
+                          </button>
                         </div>
-
-                        <button
-                          onClick={() => setActiveWizard("consultation")}
-                          className="w-full mt-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl uppercase tracking-wider transition"
-                        >
-                          Request Similar Deployment
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 {/* 10. Bottom Strong Conversion CTA */}
@@ -771,53 +804,80 @@ export default function App() {
               </div>
 
               {/* Problems Grid Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {CUSTOMER_PROBLEMS.map((prob) => (
-                  <div
-                    key={prob.id}
-                    className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-600 border border-slate-100 dark:border-slate-800 p-6 rounded-r-xl space-y-4 shadow-xs"
-                  >
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                        {prob.targetUser}
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                        {prob.problem}
-                      </h3>
-                    </div>
+              {customerProblemsState.status === "loading" && (
+                <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
+                  Loading customer problems…
+                </div>
+              )}
 
-                    <div className="space-y-3 text-xs">
-                      <div className="p-3 bg-red-50/50 dark:bg-red-950/20 rounded border border-red-100/50 dark:border-red-900/30 text-red-600 dark:text-red-450 space-y-1">
-                        <span className="font-bold uppercase tracking-wider text-[9px] block">
-                          Operational Impact:
-                        </span>
-                        <p className="leading-relaxed">{prob.impact}</p>
-                      </div>
+              {customerProblemsState.status === "error" && (
+                <div className="p-6 rounded-2xl bg-red-50/50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 text-center space-y-1">
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400">
+                    Couldn't load our customer problems.
+                  </p>
+                  <p className="text-[11px] text-red-500/80 dark:text-red-400/70">
+                    {customerProblemsState.error.message}
+                  </p>
+                </div>
+              )}
 
-                      <div className="p-3 bg-emerald-50/20 dark:bg-emerald-950/10 rounded border border-emerald-100/30 dark:border-emerald-900/30 text-slate-600 dark:text-slate-350 space-y-1">
-                        <span className="font-bold uppercase tracking-wider text-[9px] text-emerald-600 dark:text-emerald-400 block font-mono">
-                          Syntax Integrated Solution:
-                        </span>
-                        <p className="leading-relaxed">{prob.solution}</p>
-                      </div>
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        Problem ID: {prob.id}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setActiveWizard("consultation");
-                        }}
-                        className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                      >
-                        Resolve with Syntax <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              {customerProblemsState.status === "success" &&
+                customerProblemsState.data.length === 0 && (
+                  <div className="py-12 text-center text-xs text-slate-400">
+                    No customer problems are published yet.
                   </div>
-                ))}
-              </div>
+                )}
+
+              {customerProblemsState.status === "success" &&
+                customerProblemsState.data.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {customerProblemsState.data.map((prob) => (
+                      <div
+                        key={prob.id}
+                        className="bg-white dark:bg-slate-900 border-l-4 border-l-blue-600 border border-slate-100 dark:border-slate-800 p-6 rounded-r-xl space-y-4 shadow-xs"
+                      >
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+                            {prob.target_user}
+                          </span>
+                          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                            {prob.problem}
+                          </h3>
+                        </div>
+
+                        <div className="space-y-3 text-xs">
+                          <div className="p-3 bg-red-50/50 dark:bg-red-950/20 rounded border border-red-100/50 dark:border-red-900/30 text-red-600 dark:text-red-450 space-y-1">
+                            <span className="font-bold uppercase tracking-wider text-[9px] block">
+                              Operational Impact:
+                            </span>
+                            <p className="leading-relaxed">{prob.impact}</p>
+                          </div>
+
+                          <div className="p-3 bg-emerald-50/20 dark:bg-emerald-950/10 rounded border border-emerald-100/30 dark:border-emerald-900/30 text-slate-600 dark:text-slate-350 space-y-1">
+                            <span className="font-bold uppercase tracking-wider text-[9px] text-emerald-600 dark:text-emerald-400 block font-mono">
+                              Syntax Integrated Solution:
+                            </span>
+                            <p className="leading-relaxed">{prob.solution}</p>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between gap-2">
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Problem ID: {prob.id}
+                          </span>
+                          <button
+                            onClick={() => {
+                              setActiveWizard("consultation");
+                            }}
+                            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                          >
+                            Resolve with Syntax <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           )}
 
