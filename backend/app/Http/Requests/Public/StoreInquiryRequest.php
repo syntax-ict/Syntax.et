@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Public;
 
+use App\Http\Requests\Public\Concerns\HasHoneypot;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
  */
 class StoreInquiryRequest extends FormRequest
 {
+    use HasHoneypot;
+
     public function authorize(): bool
     {
         return true;
@@ -23,6 +26,7 @@ class StoreInquiryRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...$this->honeypotRules(),
             'type' => ['required', Rule::in(['consultation', 'quote', 'support'])],
             'full_name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email:rfc', 'max:190'],

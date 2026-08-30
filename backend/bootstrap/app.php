@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Support\SecurityLog;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -99,10 +101,26 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            SecurityLog::rateLimitTripped($request);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Too many requests. Please try again shortly.',
             ], 429);
+        });
+
+        // A unique-constraint violation (a duplicate slug/email/reference)
+        // is a client-fixable conflict, not a server error — give it a 409
+        // instead of falling through to the generic 500 below.
+        $exceptions->render(function (UniqueConstraintViolationException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'A record with these details already exists.',
+            ], 409);
         });
 
         // Any other HTTP-mapped exception (e.g. a plain abort(403)/abort(422)):

@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Public;
 
+use App\Http\Requests\Public\Concerns\HasHoneypot;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreCourseRegistrationRequest extends FormRequest
 {
+    use HasHoneypot;
+
     public function authorize(): bool
     {
         return true;
@@ -18,6 +21,7 @@ class StoreCourseRegistrationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            ...$this->honeypotRules(),
             'course_id' => ['required', 'integer', Rule::exists('courses', 'id')->where('is_active', true)],
             'full_name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email:rfc', 'max:190'],

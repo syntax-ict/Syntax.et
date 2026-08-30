@@ -73,6 +73,19 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Architecture §12: a separate channel for security-relevant events
+        // (failed/successful admin logins, authorization denials, spam/
+        // rate-limit rejections, and — from Phase 5 on — inquiry status
+        // changes and admin deletes) so they don't get lost in general
+        // application noise and can be shipped/retained differently later.
+        'security' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'max_files' => env('LOG_SECURITY_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

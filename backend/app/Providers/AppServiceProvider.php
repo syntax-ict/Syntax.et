@@ -36,5 +36,16 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($email.'|'.$request->ip());
         });
+
+        // Phase 4: the public write endpoints (inquiries, course
+        // registrations, contact messages) are unauthenticated by design —
+        // this is the only thing standing between them and being scripted
+        // into a spam or storage-exhaustion vector (architecture §6/§11).
+        RateLimiter::for('public-write', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
+
+        // Read-only content routes are cheap but still worth a ceiling —
+        // generous enough that no real visitor or the frontend's own
+        // polling ever notices it.
+        RateLimiter::for('public-read', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
     }
 }

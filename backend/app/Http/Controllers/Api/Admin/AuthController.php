@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\LoginRequest;
 use App\Http\Resources\Admin\UserResource;
 use App\Models\User;
 use App\Support\ApiResponse;
+use App\Support\SecurityLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,8 +26,11 @@ class AuthController extends Controller
     {
         $throttleKey = $request->string('email').'|'.$request->ip();
 
+        $email = (string) $request->string('email');
+
         if (RateLimiter::tooManyAttempts('login:'.$throttleKey, 5)) {
             $seconds = RateLimiter::availableIn('login:'.$throttleKey);
+            SecurityLog::loginRateLimited($email, $request);
 
             throw ValidationException::withMessages([
                 'email' => "Too many login attempts. Please try again in {$seconds} seconds.",
@@ -37,6 +41,7 @@ class AuthController extends Controller
 
         if (! Auth::attempt($credentials, remember: false)) {
             RateLimiter::hit('login:'.$throttleKey, 60);
+            SecurityLog::loginFailed($email, $request);
 
             throw ValidationException::withMessages([
                 'email' => 'These credentials do not match our records.',
@@ -50,6 +55,7 @@ class AuthController extends Controller
 
         if (! $user->is_active) {
             Auth::logout();
+            SecurityLog::loginBlockedInactiveAccount($email, $request);
 
             throw ValidationException::withMessages([
                 'email' => 'This account has been deactivated. Contact an administrator.',
@@ -58,6 +64,7 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
         $user->forceFill(['last_login_at' => now()])->save();
+        SecurityLog::loginSucceeded($email, $request);
 
         return $this->ok(new UserResource($user));
     }

@@ -15,11 +15,22 @@ class CourseRegistrationController extends Controller
 
     public function store(StoreCourseRegistrationRequest $request): JsonResponse
     {
-        // `status` is set explicitly rather than relying on the migration's
-        // DB column default: Eloquent's create() returns the in-memory
-        // model with only the attributes it was given.
+        $data = $request->validated();
+
+        // Explicitly whitelisted rather than spreading $data wholesale, so
+        // a validation-only field (the honeypot) can never reach create()
+        // even incidentally. `status` is set explicitly rather than relying
+        // on the migration's DB column default: Eloquent's create() returns
+        // the in-memory model with only the attributes it was given.
         $registration = CourseRegistration::query()->create([
-            ...$request->validated(),
+            'course_id' => $data['course_id'],
+            'full_name' => $data['full_name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'organization' => $data['organization'] ?? null,
+            'training_mode' => $data['training_mode'],
+            'experience_level' => $data['experience_level'],
+            'goals' => $data['goals'],
             'status' => 'pending',
         ]);
         $registration->load('course');

@@ -24,26 +24,29 @@ Route::get('/health', fn () => response()->json([
     'data' => ['status' => 'ok', 'time' => now()->toIso8601String()],
 ]));
 
-Route::get('/solution-categories', [SolutionCategoryController::class, 'index'])->name('solution-categories.index');
-Route::get('/solution-categories/{slug}', [SolutionCategoryController::class, 'show'])->name('solution-categories.show');
+Route::middleware('throttle:public-read')->group(function () {
+    Route::get('/solution-categories', [SolutionCategoryController::class, 'index'])->name('solution-categories.index');
+    Route::get('/solution-categories/{slug}', [SolutionCategoryController::class, 'show'])->name('solution-categories.show');
 
-Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
-Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
+    Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('/services/{slug}', [ServiceController::class, 'show'])->name('services.show');
 
-Route::get('/customer-problems', [CustomerProblemController::class, 'index'])->name('customer-problems.index');
+    Route::get('/customer-problems', [CustomerProblemController::class, 'index'])->name('customer-problems.index');
 
-Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
-Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');
+    Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{slug}', [CourseController::class, 'show'])->name('courses.show');
 
-Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
-Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/{slug}', [ProjectController::class, 'show'])->name('projects.show');
 
-Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
-Route::get('/inquiries/{reference}', [InquiryController::class, 'show'])->name('inquiries.show');
+    Route::get('/inquiries/{reference}', [InquiryController::class, 'show'])->name('inquiries.show');
+});
 
-Route::post('/course-registrations', [CourseRegistrationController::class, 'store'])->name('course-registrations.store');
-
-Route::post('/contact-messages', [ContactMessageController::class, 'store'])->name('contact-messages.store');
+Route::middleware('throttle:public-write')->group(function () {
+    Route::post('/inquiries', [InquiryController::class, 'store'])->name('inquiries.store');
+    Route::post('/course-registrations', [CourseRegistrationController::class, 'store'])->name('course-registrations.store');
+    Route::post('/contact-messages', [ContactMessageController::class, 'store'])->name('contact-messages.store');
+});
 
 /*
 |--------------------------------------------------------------------------
