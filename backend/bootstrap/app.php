@@ -1,0 +1,133 @@
+<?php
+
+use App\Http\Middleware\EnsureUserIsAdmin;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware): void {
+        // Sanctum SPA cookie auth for the same-origin admin panel (architecture §8).
+        $middleware->statefulApi();
+
+        $middleware->alias([
+            'admin' => EnsureUserIsAdmin::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+        );
+
+        // Architecture §11: one JSON envelope for every API error, regardless
+        // of which exception produced it. This is the single place that
+        // shape is defined — controllers never build their own error bodies.
+        $isApi = fn (Request $request) => $request->is('api/*') || $request->expectsJson();
+
+        $exceptions->render(function (ValidationException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], $e->status);
+        });
+
+        $exceptions->render(function (AuthenticationException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Authentication required.',
+            ], 401);
+        });
+
+        $exceptions->render(function (AuthorizationException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?: 'This action is unauthorized.',
+            ], 403);
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'The requested resource was not found.',
+            ], 404);
+        });
+
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'The requested resource was not found.',
+            ], 404);
+        });
+
+        $exceptions->render(function (TooManyRequestsHttpException $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Too many requests. Please try again shortly.',
+            ], 429);
+        });
+
+        // Any other HTTP-mapped exception (e.g. a plain abort(403)/abort(422)):
+        // keep its status code, normalize the body.
+        $exceptions->render(function (HttpExceptionInterface $e, Request $request) use ($isApi) {
+            if (! $isApi($request)) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage() ?: 'Request failed.',
+            ], $e->getStatusCode());
+        });
+
+        // Final catch-all: never leak a stack trace or exception class name
+        // to an API client in production.
+        $exceptions->render(function (Throwable $e, Request $request) use ($isApi) {
+            if (! $isApi($request) || config('app.debug')) {
+                return null;
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred.',
+            ], 500);
+        });
+    })->create();
