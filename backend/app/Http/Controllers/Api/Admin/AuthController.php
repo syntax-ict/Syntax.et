@@ -39,7 +39,15 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if (! Auth::attempt($credentials, remember: false)) {
+        // Explicitly pinned to the 'web' guard throughout this method
+        // (matching logout(), below) rather than the bare Auth:: facade's
+        // implicit default guard: the `auth:sanctum` middleware elsewhere
+        // in the app calls Auth::shouldUse('sanctum') on successful
+        // authentication, which would otherwise make the "default" guard
+        // resolution here depend on what else has run earlier in the same
+        // process — RequestGuard (what 'sanctum' resolves to) doesn't even
+        // implement attempt().
+        if (! Auth::guard('web')->attempt($credentials, remember: false)) {
             RateLimiter::hit('login:'.$throttleKey, 60);
             SecurityLog::loginFailed($email, $request);
 
@@ -51,10 +59,10 @@ class AuthController extends Controller
         RateLimiter::clear('login:'.$throttleKey);
 
         /** @var User $user */
-        $user = Auth::user();
+        $user = Auth::guard('web')->user();
 
         if (! $user->is_active) {
-            Auth::logout();
+            Auth::guard('web')->logout();
             SecurityLog::loginBlockedInactiveAccount($email, $request);
 
             throw ValidationException::withMessages([
