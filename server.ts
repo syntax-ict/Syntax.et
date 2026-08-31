@@ -12,89 +12,17 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 
 app.use(express.json());
 
-// In-memory store for lead tracking & support tickets (persists while server is active)
-interface Lead {
-  id: string;
-  type: "consultation" | "quote" | "training" | "support";
-  status: "Pending Review" | "In Contact" | "In Progress" | "Resolved" | "Completed";
-  createdAt: string;
-  data: Record<string, unknown>;
-  notes?: string;
-}
-
-const leads: Lead[] = [
-  // Seed with a few realistic initial entries to build trust and show how the portal works
-  {
-    id: "LT-8910",
-    type: "consultation",
-    status: "Completed",
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    data: {
-      name: "Jean-Pierre Mugisha",
-      email: "jp.mugisha@gov-procurement.org",
-      organization: "National Procurement Agency",
-      phone: "+250 788 123 456",
-      problemArea: "Attendance Management & Security",
-      details:
-        "Need a biometric clock-in system integrated with our security gates to solve accurate staff attendance tracking.",
-      urgency: "High",
-      budget: "$5,000 - $10,000",
-    },
-    notes:
-      "Completed physical site assessment. Recommended Suprema Biometric terminals. Sent formal proposal.",
-  },
-  {
-    id: "LT-8911",
-    type: "quote",
-    status: "In Contact",
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    data: {
-      name: "Sarah Kasingye",
-      email: "sarah@apexventures.com",
-      organization: "Apex Ventures Ltd",
-      phone: "+256 701 987 654",
-      servicePillar: "Technology Solutions",
-      items: ["Networking infrastructure", "System integration", "Technical support"],
-      details:
-        "Moving to a new office block. Need structured cabling, high-speed networking setup, and monthly IT maintenance support for 25 workstations.",
-      timeline: "Within 30 days",
-    },
-    notes: "Initial call done. Tech lead scheduled network blueprint design for Monday morning.",
-  },
-  {
-    id: "LT-8912",
-    type: "training",
-    status: "Pending Review",
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    data: {
-      name: "Erick Ndlovu",
-      email: "erick.n@techfuture.io",
-      organization: "Individual Professional",
-      phone: "+27 82 555 0199",
-      course: "Corporate Digital Security & Biometric Integration",
-      trainingType: "Online training",
-      experience: "Intermediate (IT background)",
-      goals:
-        "Looking to gain skills in setting up modern enterprise IP camera systems and CCTV networking for my career advancement.",
-    },
-  },
-  {
-    id: "LT-8913",
-    type: "support",
-    status: "Pending Review",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    data: {
-      name: "Marcus Aurelius",
-      email: "m.aurelius@colosseum-retail.com",
-      organization: "Colosseum Retail Hub",
-      phone: "+27 11 400 9000",
-      subject: "CCTV Stream Offline on Channel 4 & 5",
-      priority: "Urgent",
-      details:
-        "Cameras on the main entrance and back dock show blank black screens. Tried rebooting the NVR switch, but no response. Require immediate technical support.",
-    },
-  },
-];
+// Security audit finding M2: baseline hardening headers on every response.
+// Deliberately no Content-Security-Policy here — see backend's
+// SecurityHeaders middleware docblock for why a CSP isn't a safe default
+// to ship without deployment-specific tuning.
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  next();
+});
 
 // Health probe for container orchestrators and uptime monitoring
 app.get("/api/health", (_req, res) => {
@@ -106,133 +34,33 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Lead Routes
-app.get("/api/leads", (_req, res) => {
-  res.json({ success: true, leads });
-});
+// Security audit finding H3: this route proxies to a paid third-party API
+// (Gemini) with no authentication of its own, so it needs its own
+// abuse ceiling independent of anything upstream. A small in-process,
+// per-IP sliding window — consistent with this file's existing
+// in-memory-Map style — rather than pulling in a new dependency for one
+// route. Resets naturally on redeploy/restart, which is an accepted
+// tradeoff for a single-instance dev/prototype server; a multi-instance
+// production deployment would need a shared store (e.g. Redis) instead.
+const ASSISTANT_RATE_LIMIT = 10; // requests
+const ASSISTANT_RATE_WINDOW_MS = 60_000; // per minute, per IP
+const assistantRequestLog = new Map<string, number[]>();
 
-app.post("/api/leads", (req, res) => {
-  const { type, data } = req.body;
-  if (!type || !data) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Missing required fields: type and data" });
+function isRateLimited(ip: string): { limited: boolean; retryAfterSeconds: number } {
+  const now = Date.now();
+  const windowStart = now - ASSISTANT_RATE_WINDOW_MS;
+  const recent = (assistantRequestLog.get(ip) ?? []).filter((ts) => ts > windowStart);
+
+  if (recent.length >= ASSISTANT_RATE_LIMIT) {
+    const retryAfterSeconds = Math.ceil((recent[0] + ASSISTANT_RATE_WINDOW_MS - now) / 1000);
+    assistantRequestLog.set(ip, recent);
+    return { limited: true, retryAfterSeconds: Math.max(retryAfterSeconds, 1) };
   }
 
-  const newId = `LT-${Math.floor(1000 + Math.random() * 9000)}`;
-  const newLead: Lead = {
-    id: newId,
-    type,
-    status: "Pending Review",
-    createdAt: new Date().toISOString(),
-    data,
-  };
-
-  leads.unshift(newLead);
-  res.status(201).json({ success: true, lead: newLead });
-});
-
-app.patch("/api/leads/:id", (req, res) => {
-  const { id } = req.params;
-  const { status, notes } = req.body;
-  const leadIndex = leads.findIndex((l) => l.id === id);
-
-  if (leadIndex === -1) {
-    return res.status(404).json({ success: false, error: "Lead not found" });
-  }
-
-  if (status) leads[leadIndex].status = status;
-  if (notes !== undefined) leads[leadIndex].notes = notes;
-
-  res.json({ success: true, lead: leads[leadIndex] });
-});
-
-// Secure Server-side Payment Abstraction Layer
-interface Transaction {
-  txRef: string;
-  amount: number;
-  currency: string;
-  email: string;
-  phone: string;
-  name: string;
-  description: string;
-  provider: string;
-  status:
-    | "PENDING"
-    | "INITIATED"
-    | "PROCESSING"
-    | "PAID"
-    | "FAILED"
-    | "CANCELLED"
-    | "REFUNDED"
-    | "PARTIALLY_REFUNDED";
-  createdAt: string;
+  recent.push(now);
+  assistantRequestLog.set(ip, recent);
+  return { limited: false, retryAfterSeconds: 0 };
 }
-
-const transactions: Transaction[] = [];
-
-app.post("/api/payments/initialize", (req, res) => {
-  const { txRef, amount, currency, email, phone, name, description, provider } = req.body;
-
-  if (!txRef || !amount || !currency || !email || !name || !provider) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Missing required parameters for payment initialization" });
-  }
-
-  // Create authoritative server-side record
-  const transaction: Transaction = {
-    txRef,
-    amount: Number(amount),
-    currency,
-    email,
-    phone: phone || "",
-    name,
-    description: description || "Syntax Technology Invoice",
-    provider,
-    status: "INITIATED",
-    createdAt: new Date().toISOString(),
-  };
-
-  transactions.push(transaction);
-
-  // Return a simulation checkoutUrl that redirects the client to our secure localized payment portal
-  const checkoutUrl = `/payment-checkout?txRef=${txRef}`;
-
-  res.status(201).json({
-    success: true,
-    txRef,
-    status: "INITIATED",
-    checkoutUrl,
-    message: "Payment successfully initiated on authoritative server",
-  });
-});
-
-app.get("/api/payments/verify/:txRef", (req, res) => {
-  const { txRef } = req.params;
-  const transaction = transactions.find((t) => t.txRef === txRef);
-
-  if (!transaction) {
-    return res.status(404).json({ success: false, error: "Transaction not found" });
-  }
-
-  // Authoritatively update state to PAID if it is still INITIATED/PROCESSING to simulate real gateway callbacks
-  if (transaction.status === "INITIATED" || transaction.status === "PROCESSING") {
-    transaction.status = "PAID"; // Simulate successful webhook or provider-side confirmation
-  }
-
-  res.json({
-    success: true,
-    txRef: transaction.txRef,
-    status: transaction.status,
-    amount: transaction.amount,
-    currency: transaction.currency,
-    email: transaction.email,
-    provider: transaction.provider,
-    description: transaction.description,
-    createdAt: transaction.createdAt,
-  });
-});
 
 // Lazy-initialize Gemini SDK to protect against missing API keys on startup
 let geminiAI: GoogleGenAI | null = null;
@@ -256,6 +84,15 @@ function getGeminiClient(): GoogleGenAI {
 
 // AI Assistant Route for interactive consultation guidance
 app.post("/api/assistant", async (req, res) => {
+  const { limited, retryAfterSeconds } = isRateLimited(req.ip ?? "unknown");
+  if (limited) {
+    res.setHeader("Retry-After", String(retryAfterSeconds));
+    return res.status(429).json({
+      success: false,
+      error: "Too many requests. Please try again shortly.",
+    });
+  }
+
   const { messages } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ success: false, error: "Messages array is required." });
@@ -265,7 +102,7 @@ app.post("/api/assistant", async (req, res) => {
     const ai = getGeminiClient();
 
     // Construct conversation with system guidelines
-    const systemInstruction = `You are the Syntax AI Business Consultant, a sophisticated, professional advisor representing Syntax Technology. 
+    const systemInstruction = `You are the Syntax AI Business Consultant, a sophisticated, professional advisor representing Syntax Technology.
 Your objective is to consult visitors, understand their organizational or individual needs, and guide them towards the appropriate solution in one of our 4 business pillars:
 1. TECHNOLOGY SOLUTIONS (IT Infrastructure, Networking, Maintenance, Software, Integration, Automation).
 2. SECURITY & SMART SYSTEMS (CCTV/Surveillance, Biometrics, Access Control, GPS/Fleet Tracking).
@@ -305,12 +142,14 @@ YOUR TONE & CONSTRAINTS:
       "I apologize, but I am unable to process your request at this moment. Please feel free to initiate a custom Consultation Request using our forms.";
     res.json({ success: true, text: responseText });
   } catch (error) {
+    // Security audit finding M4: log the real error server-side, but never
+    // echo it (or its message) back to the client — it can contain
+    // upstream API internals not meant for end users.
     console.error("Gemini API Error in /api/assistant:", error);
     res.status(500).json({
       success: false,
       error:
         "Unable to connect to Syntax AI. Please try again or complete a direct Consultation Request.",
-      details: error instanceof Error ? error.message : String(error),
     });
   }
 });

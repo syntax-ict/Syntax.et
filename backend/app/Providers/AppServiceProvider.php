@@ -28,14 +28,20 @@ class AppServiceProvider extends ServiceProvider
         // encode what "staff" is additionally allowed to do.
         Gate::before(fn ($user) => $user->isAdmin() ? true : null);
 
-        // Architecture §8: brute-force protection on the admin login route,
-        // keyed by email+IP so one leaked/guessed email can't be hammered
-        // from a single client, and one client can't spray many emails.
-        RateLimiter::for('login', function (Request $request) {
-            $email = (string) $request->input('email');
-
-            return Limit::perMinute(5)->by($email.'|'.$request->ip());
-        });
+        // Architecture §8: the per-account/IP lockout (5 attempts/60s,
+        // keyed by email+IP) is enforced manually inside
+        // AuthController::login() via RateLimiter::tooManyAttempts(),
+        // rather than as route middleware — it needs to render the app's
+        // own JSON error shape with a countdown message, not the generic
+        // 429 a `throttle:` middleware would produce.
+        //
+        // That per-account check alone does not cap trying many different
+        // emails from one IP (security audit finding M3): each new email
+        // gets its own untouched bucket, so credential-spraying across
+        // many admin emails from one client would never trip it. This
+        // named limiter is that hard per-IP ceiling, applied as
+        // `throttle:login-ip` route middleware in routes/api.php.
+        RateLimiter::for('login-ip', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
 
         // Phase 4: the public write endpoints (inquiries, course
         // registrations, contact messages) are unauthenticated by design —

@@ -76,7 +76,9 @@ Route::middleware('throttle:public-write')->group(function () {
 | only proves "some admin-panel account", not which one may do what.
 */
 Route::prefix('admin')->name('admin.')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:login-ip')
+        ->name('login');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

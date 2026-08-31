@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsAdmin;
+use App\Http\Middleware\SecurityHeaders;
 use App\Support\SecurityLog;
+use App\Support\TrustedProxies;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -29,6 +31,27 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
         ]);
+
+        // Security audit finding M2: baseline hardening headers on every response.
+        $middleware->append(SecurityHeaders::class);
+
+        // Security audit finding H4: without this, $request->ip() (which
+        // every rate limiter below keys on) always resolves to the raw TCP
+        // peer address. Deployed behind any reverse proxy/load balancer/CDN
+        // — the standard shape for production — that peer is the proxy for
+        // every visitor, collapsing every IP-keyed rate limit into one
+        // shared bucket for the whole site. Trusting no proxies (the
+        // default, TRUSTED_PROXIES unset) preserves today's exact behavior
+        // for a direct (no-proxy) deployment. An operator who does put a
+        // proxy in front sets TRUSTED_PROXIES to that proxy's own
+        // address/CIDR so X-Forwarded-For is honored only from that
+        // trusted hop — never blanket-trusted ('*'), which would let any
+        // client spoof its own apparent IP and bypass every limiter below.
+        $trustedProxies = TrustedProxies::parse((string) env('TRUSTED_PROXIES', ''));
+
+        if ($trustedProxies !== []) {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
@@ -137,9 +160,17 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         // Final catch-all: never leak a stack trace or exception class name
-        // to an API client in production.
+        // to an API client — regardless of APP_DEBUG. Deliberately NOT
+        // gated on config('app.debug'): that would mean a misconfigured or
+        // forgotten-default APP_DEBUG=true (the historical default in this
+        // app's own .env.example) leaks full traces, file paths, and
+        // exception messages to any anonymous client on every unhandled
+        // error (security audit finding C1). Laravel still reports() every
+        // exception to storage/logs/laravel.log independently of what
+        // render() returns, so local debugging is unaffected — read the
+        // log instead of the HTTP response.
         $exceptions->render(function (Throwable $e, Request $request) use ($isApi) {
-            if (! $isApi($request) || config('app.debug')) {
+            if (! $isApi($request)) {
                 return null;
             }
 

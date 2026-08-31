@@ -80,6 +80,31 @@ class AuthTest extends TestCase
         $this->assertGuest('web');
     }
 
+    /**
+     * Security audit finding M3: the per-account lockout above is keyed by
+     * (email, IP), so spraying one guess each across many different emails
+     * from a single IP never trips it — each email gets its own untouched
+     * bucket. This is the separate, IP-only ceiling that closes that gap.
+     */
+    public function test_login_is_rate_limited_per_ip_across_different_emails(): void
+    {
+        for ($i = 0; $i < 20; $i++) {
+            $response = $this->postJson('/api/admin/login', [
+                'email' => "nonexistent-{$i}@example.com",
+                'password' => 'whatever-password',
+            ]);
+
+            $response->assertStatus(422);
+        }
+
+        $response = $this->postJson('/api/admin/login', [
+            'email' => 'nonexistent-21@example.com',
+            'password' => 'whatever-password',
+        ]);
+
+        $response->assertStatus(429);
+    }
+
     public function test_authenticated_user_can_fetch_own_profile(): void
     {
         $user = User::factory()->create();
